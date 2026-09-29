@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 waliduj_dane.py)",
+      "Bash(python3 waliduj_dane.py *)",
+      "Bash(.venv/bin/python waliduj_dane.py *)",
+      "Bash(.venv/bin/python pobierz_dane.py *)",
+      "Bash(.venv/bin/python generuj_heatmap.py *)",
+      "Bash(.venv/bin/python generuj_rok.py *)",
+      "Bash(.venv/bin/python konwertuj_excel.py *)",
+      "Bash(./start.sh)",
+      "Bash(./start.sh *)",
+      "WebFetch(domain:tge.pl)"
+    ]
+  }
+}

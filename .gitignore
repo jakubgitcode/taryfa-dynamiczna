@@ -1,0 +1,7 @@
+.venv/
+myvenv/
+__pycache__/
+*.pyc
+*.tmp
+# lokalna kopia .claude/skills robiona przez narzędzia agentowe
+.agents/
