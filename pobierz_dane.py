@@ -2,7 +2,7 @@
 Skrypt do pobierania danych godzinowych TGE RDN.
 
 Użycie:
-    python pobierz_dane.py <miesiąc> [rok] [--pomin-braki]
+    python pobierz_dane.py <miesiąc> [rok] [--pomin-braki] [--niepelny]
 
 Przykłady:
     python pobierz_dane.py 12 2025      # grudzień 2025
@@ -16,11 +16,13 @@ Kolumna `date` w CSV to data DOSTAWY. Strona tge.pl przyjmuje w `date_start` dat
     2025-10-01 .. 2025-11-17   raporty xlsx z katalogu archiwum/ (strona nie ma dla nich cen godzinowych)
     od 2025-11-18              strona „TGeBase i średnioważone ceny godzinowe”
 
-Dni późniejsze niż dzisiaj są pomijane. Plik wynikowy jest zapisywany dopiero po pobraniu
-wszystkich dni — przy błędzie poprzednia wersja pliku zostaje nietknięta.
+Niezakończony miesiąc jest odrzucany (patrz --niepelny). Plik wynikowy jest zapisywany dopiero
+po pobraniu wszystkich dni — przy błędzie poprzednia wersja pliku zostaje nietknięta.
 
 --pomin-braki  pomija dni, dla których źródło nie ma notowań, zamiast przerywać. Potrzebne tylko
                dla dostawy 2025-09-30, której tge.pl nie pokazuje już w żadnej tabeli godzinowej.
+--niepelny     pozwala pobrać miesiąc, który się jeszcze nie skończył (do dzisiejszej dostawy).
+               Taki plik ma braki i walidator go odrzuci — do podglądu, nie do commita.
 """
 import csv
 import os
@@ -164,6 +166,7 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(1)
     pomin_braki = "--pomin-braki" in sys.argv
+    niepelny = "--niepelny" in sys.argv
     if "--stary" in sys.argv:
         print("Uwaga: --stary nie jest już potrzebne — źródło jest wybierane automatycznie wg daty dostawy")
 
@@ -176,11 +179,18 @@ if __name__ == "__main__":
 
     last_day = calendar.monthrange(year, month)[1]
     start = date(year, month, 1)
-    end = min(date(year, month, last_day), date.today())
-    if end < start:
-        print(f"{year}-{month:02d} jeszcze się nie zaczął")
-        sys.exit(1)
-    if end.day != last_day:
+    end = date(year, month, last_day)
+    today = date.today()
+    if end > today:
+        # bez tego pobralibyśmy kawałek miesiąca, nadpisali plik i dopiero walidator zgłosiłby braki
+        if not niepelny:
+            print(f"{year}-{month:02d} jeszcze się nie skończył — ostatnia dostępna dostawa to {today}.")
+            print("Poczekaj do końca miesiąca albo użyj --niepelny (plik będzie miał braki).")
+            sys.exit(1)
+        if start > today:
+            print(f"{year}-{month:02d} jeszcze się nie zaczął")
+            sys.exit(1)
+        end = today
         print(f"Uwaga: miesiąc niezakończony — pobieram dostawy do {end}")
 
     month_str = f"{year}-{month:02d}"

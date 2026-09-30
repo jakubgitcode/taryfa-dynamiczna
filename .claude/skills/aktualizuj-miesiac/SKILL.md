@@ -11,8 +11,9 @@ Lokalnie pracuj z katalogu głównego repo.
 
 ## 1. Sprawdzenia wstępne
 
-- Miesiąc powinien być **zakończony**. `pobierz_dane.py` pobierze niezakończony miesiąc tylko do dzisiejszej
-  dostawy, a walidator zgłosi brakujące dni — taki plik nadaje się do podglądu, nie do commita.
+- Miesiąc musi być **zakończony** — `pobierz_dane.py` odrzuca niezakończony miesiąc od razu, zanim cokolwiek
+  pobierze. Flaga `--niepelny` pobiera go do dzisiejszej dostawy, ale walidator taki plik odrzuci
+  (podgląd, nie commit).
 - Źródło danych jest wybierane automatycznie wg daty dostawy (stara strona / `archiwum/*.xlsx` / TGeBase) —
   flaga `--stary` nie jest potrzebna.
 - Jeśli plik `tge_rdn_hourly_YYYY-MM.csv` już istnieje, zostanie nadpisany; po pobraniu pokaż
