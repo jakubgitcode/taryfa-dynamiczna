@@ -24,6 +24,7 @@ więc **uruchamiaj je z katalogu głównego repo**.
 | `generuj_rok.py` | **aktualny** | → `tge_rdn_heatmap_<rok>_all.png` (siatka 4×3) i `_column.png` |
 | `konwertuj_excel.py` | **aktualny** | `archiwum/*.xlsx` → `tge_rdn_hourly_YYYY-MM.xlsx.csv`; jego `parse_excel_file` używa też `pobierz_dane.py` |
 | `.github/workflows/aktualizuj-dane.yml` | **aktualny** | 1. dnia miesiąca uruchamia `start.sh` za poprzedni miesiąc i commituje CSV + PNG |
+| `.claude/skills/`, `.agents/skills/` | **aktualne** | te same skille w dwóch miejscach (Claude Code i narzędzia czytające `.agents/`) — **zmieniasz jeden, skopiuj do drugiego** |
 | `miesac.py`, `miesac-stary-format.py` | przestarzałe | stare wersje scraper+heatmapa w jednym, **z błędem dat** — nie używać |
 | `all.png.py`, `all_column.py`, `pliki.py` | **to nie jest Python** | zapisy czatu Copilota; zastąpione przez `generuj_rok.py` (`pliki.py` = sposób pobrania `archiwum/`) |
 | `run_year_2025.py` | pusty | — |
