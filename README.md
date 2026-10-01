@@ -16,6 +16,17 @@ pip install -r requirements.txt       # Python 3.12
 Pojedyncze kroki: `pobierz_dane.py <miesiąc> [rok]`, `waliduj_dane.py [csv…]`,
 `generuj_heatmap.py <csv>`, `generuj_rok.py <rok>`.
 
+## Kalkulator magazynu energii
+
+`kalkulator.html` — strona licząca na tych danych koszt energii w czterech wariantach: taryfa G11,
+taryfa dynamiczna, dynamiczna z magazynem ładowanym w najtańszych godzinach doby oraz magazyn z
+fotowoltaiką. Parametry (pojemność i moc magazynu, straty, ceny, zużycie, kWp instalacji PV) podaje się
+w formularzu; strona otwiera się z przykładowymi wartościami. Dane cenowe są wbudowane w plik:
+
+```bash
+python przygotuj_kalkulator.py     # po dociągnięciu nowego miesiąca
+```
+
 ## Dane
 
 `tge_rdn_hourly_YYYY-MM.csv`: `date,hour_from,hour_to,price_pln_per_mwh,volume_mwh`, gdzie `date` to **data dostawy**.

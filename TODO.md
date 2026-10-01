@@ -1,69 +1,72 @@
 # TODO — taryfa-dynamiczna
 
-Priorytety: **P0** = poprawność danych, **P1** = środowisko/porządek, **P2** = jakość kodu,
-**P3** = właściwy cel projektu (opłacalność), **P4** = automatyzacja.
-Kontekst: `AGENTS.md`. Walidator: `python3 waliduj_dane.py`.
+Kontekst i zasady: `AGENTS.md`. Walidator danych: `python3 waliduj_dane.py`.
+Na górze to, co zostało; na dole skrót tego, co już zrobione.
 
-## P0 — poprawność danych
+## Dane
 
-- [x] **P0-1 Przesunięcie dat o 1 dzień** (wrzesień 2026). `date_start` na tge.pl to data sesji, ceny dotyczą
-      dostawy następnego dnia — potwierdzone nagłówkiem starej strony i adresem iframe'a TGeBase, który
-      używa tego samego `date_start`. `pobierz_dane.py` pyta o `D-1`, na starej stronie sprawdza datę dostawy
-      z nagłówka; wszystkie miesiące pobrane ponownie; kontrola: czerwiec 2025 = stare dane +1 dzień (720/720).
-- [x] **P0-2 2026-01 błędny od 22.01** — pobrany ponownie.
-- [x] **P0-3 Zabezpieczenia scrapera:** pomijanie dostaw po dzisiejszej dacie, odrzucanie dnia z samymi `-`
-      i dnia identycznego z poprzednim, zapis atomowy (`.tmp` + `os.replace`), retry, User-Agent.
-- [x] **P0-4 Brakujące miesiące 2026-02 … 2026-08** — pobrane.
-- [ ] **P0-5 Spójność indeksu ceny.** Fixing I (do 30.09.2025) vs xlsx (1.10–17.11.2025) vs średnioważona
-      TGeBase (od 18.11.2025). Ustalić, która cena odpowiada rozliczeniu w taryfie dynamicznej
-      i ew. zapisywać kolumnę `source`.
-- [x] **P0-6 Listopad 2025** — teraz spójnie: xlsx (1–17) + TGeBase (18–30), obie części z datami dostawy.
-- [x] **P0-7 (częściowo)** Zmiana czasu na letni na nowym endpoincie: 2026-03-29 ma 24 wiersze z pustą
-      godziną `1-2` — tak samo jak stara strona. Zostaje do sprawdzenia zmiana na czas zimowy (2026-10-25).
-- [ ] **P0-8 Dostawa 2025-09-30** — brak w źródłach (patrz `AGENTS.md`). Poszukać innego źródła
-      (raport xlsx TGE, PSE) albo zostawić udokumentowaną lukę.
+- [ ] **Spójność indeksu ceny.** Mamy trzy różne indeksy w jednym szeregu: Fixing I (dostawy do 30.09.2025),
+      cena z raportu xlsx (1.10–17.11.2025) i średnioważona TGeBase (od 18.11.2025). Ustalić, który odpowiada
+      rozliczeniu w taryfie dynamicznej, opisać w README i rozważyć kolumnę `source` w CSV.
+      **Dopóki to nie jest zamknięte, porównania 2025 vs 2026 w kalkulatorze są obarczone tym błędem.**
+- [ ] **Brak dostawy 2025-09-30.** Nie ma jej w żadnym źródle (szczegóły w `AGENTS.md`). Poszukać raportu
+      xlsx TGE albo danych PSE, ewentualnie zostawić udokumentowaną lukę.
+- [ ] **Zmiana czasu na zimowy 2026-10-25** — pierwszy taki dzień na endpoincie TGeBase. Po pobraniu
+      października sprawdzić, czy doba ma 25 wierszy i jak oznaczona jest dodatkowa godzina
+      (zmiana na czas letni już sprawdzona: 24 wiersze z pustą godziną `1-2`).
+- [ ] Rozważyć dane 15-minutowe (od 1.10.2025 SDAC ma 15-min MTU; xlsx zawiera kontrakty `_Qhh:mm`).
+      Przy magazynie ma to znaczenie — ładowanie reaguje na kwadranse, nie na godziny.
 
-## P1 — środowisko i porządek w repo
+## Kalkulator magazynu energii (`kalkulator.html`)
 
-- [x] Odtworzyć `.venv` (Python 3.12, przepis w `AGENTS.md` — na vboxsf bez symlinków).
-- [ ] Usunąć zepsute `myvenv/`. Przypiąć wersje w `requirements.txt` (CI instaluje najnowsze — dziś pandas 3.x).
-- [ ] Dodać `.gitignore` (`.venv/`, `myvenv/`, `__pycache__/`, `*.pyc`, `*.tmp`).
+Pierwsza wersja działa: cztery warianty (G11 / dynamiczna / + magazyn / + magazyn i PV), dane 2025–2026
+wbudowane w stronę przez `przygotuj_kalkulator.py`.
+
+- [ ] Podpiąć `przygotuj_kalkulator.py` do `start.sh` (i tym samym do CI), żeby dane w kalkulatorze
+      odświeżały się razem z heatmapami. Uwaga: opublikowaną stronę trzeba przepublikować ręcznie.
+- [ ] Opłaty stałe i opłata mocowa — dziś pominięte (są takie same w każdym wariancie, ale zmieniają rachunek).
+- [ ] Degradacja magazynu (np. −2%/rok) i koszt kapitału — bez tego prosty zwrot jest zbyt optymistyczny.
+- [ ] Import profilu zużycia z licznika (CSV z portalu OSD) zamiast profilu modelowego.
+- [ ] Produkcja PV z realnych danych (PVGIS dla lokalizacji) zamiast modelu sinusoidalnego.
+- [ ] G12/G12w jako dodatkowy punkt odniesienia obok G11.
+- [ ] Scenariusz z agregatem (koszt paliwa zł/kWh, motogodziny) — wariant „zamiast magazynu”.
+- [ ] Scenariusze przesuwania zużycia: EV, pompa ciepła, bojler (ile kWh da się przenieść w tanie godziny).
+- [ ] Odwrócone pytanie: przy jakiej cenie magazynu (zł/kWh) zwrot schodzi poniżej 10 lat.
+- [ ] Sprawdzić, czy i na jakich zasadach opłaca się oddawać energię z magazynu do sieci (net-billing).
+
+## Automatyzacja
+
+- [ ] **Sprawdzić harmonogram CI.** Przebieg zaplanowany na 1.10.2026 06:17 UTC nie wystartował
+      (ręczne uruchomienia działają, push z runnera potwierdzony). Jeśli 1.11 też nie ruszy —
+      poszukać przyczyny (crony GitHuba bywają opóźniane, nowe repo bywa rejestrowane z opóźnieniem).
+- [ ] CI: `ruff` + `pytest` na pull requestach.
+
+## Kod i porządki
+
+- [ ] Usunąć zastąpione pliki: `all.png.py`, `all_column.py` (zapisy czatu), `miesac.py`,
+      `miesac-stary-format.py` (mają stary błąd dat), `run_year_2025.py` (pusty), `old/`.
+- [ ] `pliki.py` (zapis czatu) → prawdziwy `pobierz_archiwum.py` (xlsx z `https://tge.pl/RDN_instrumenty_15`;
+      uwaga: ten adres przestał zwracać listę plików — sprawdzić, gdzie TGE trzyma raporty teraz).
+- [ ] Usunąć zepsute `myvenv/`; przypiąć wersje w `requirements.txt` (CI instaluje najnowsze — dziś pandas 3.x).
 - [ ] Git na vboxsf: `git config core.fileMode false` i `safe.directory` dla tej ścieżki.
-- [x] Naprawić `start.sh` — teraz cały pipeline dla miesiąca, używany też przez CI.
-- [x] `all.png.py` + `all_column.py` → `generuj_rok.py <rok> [--uklad siatka|kolumna]`.
-- [ ] Usunąć zastąpione pliki: `all.png.py`, `all_column.py`, `miesac.py`, `miesac-stary-format.py`
-      (mają stary błąd dat), `run_year_2025.py` (pusty), `old/`.
-- [ ] `pliki.py` (zapis czatu) → prawdziwy `pobierz_archiwum.py` (xlsx z `https://tge.pl/RDN_instrumenty_15`).
-- [ ] Zdecydować o `*.xlsx.csv` (surowe wyjście konwertera — dane są już w miesięcznych CSV).
+- [ ] Zdecydować o `*.xlsx.csv` (surowe wyjście konwertera — te same dane są w miesięcznych CSV).
 - [ ] Uporządkować katalogi: `dane/` (CSV), `wykresy/` (PNG), `archiwum/` (xlsx), kod w `skrypty/` lub pakiecie.
-- [x] Domyślny rok w `pobierz_dane.py` = bieżący (w `konwertuj_excel.py` nadal 2025).
-
-## P2 — jakość kodu
-
-- [x] Wspólna paleta i `load_pivot()` w `generuj_heatmap.py`, używane przez `generuj_rok.py`.
-- [ ] `argparse` zamiast ręcznego parsowania `sys.argv`.
+- [ ] `argparse` zamiast ręcznego parsowania `sys.argv`; domyślny rok w `konwertuj_excel.py` (wciąż 2025).
 - [ ] Tryb „dociągnij tylko brakujące dni” w `pobierz_dane.py`.
 - [ ] Testy `pytest`: `pl_number_to_float`, parser HTML na zapisanych stronach (stara z nagłówkiem, TGeBase,
       strona z samymi `-`), `konwertuj_excel.parse_excel_file` (w tym 26.10.2025 z `H02a`), walidator.
-- [x] Walidator w repo (`waliduj_dane.py`), wołany przez `start.sh` i CI.
-- [ ] `ruff` (lint + format).
-- [ ] Heatmapa: oznaczać komórki bez danych, w dniu 25 h zaznaczyć uśrednioną godzinę.
-- [ ] Rozważyć dane 15-minutowe (od 1.10.2025 SDAC ma 15-min MTU; xlsx zawiera `_Qhh:mm`).
+- [ ] Heatmapa: oznaczać komórki bez danych, w dniu 25-godzinnym zaznaczyć uśrednioną godzinę.
+- [ ] Skille są w dwóch kopiach (`.claude/skills/`, `.agents/skills/`) — rozważyć skrypt sprawdzający, czy się nie rozjechały.
 
-## P3 — właściwy cel: analiza opłacalności taryfy dynamicznej
+## Zrobione (wrzesień–październik 2026)
 
-- [ ] Model kosztu: `Σ zużycie_h × (cena_RDN_h + marża/opłata handlowa)` + akcyza + VAT + opłaty
-      dystrybucyjne (zmienne strefowe + stałe). Parametry w pliku konfiguracyjnym, per sprzedawca/OSD.
-- [ ] Taryfy porównawcze: G11, G12, G12w (+ ewentualnie ceny maksymalne w danym okresie), z datą obowiązywania stawek.
-- [ ] Profil zużycia: (a) standardowy profil godzinowy, (b) import danych z licznika z portalu OSD.
-- [ ] Wynik: koszt miesięczny i roczny w każdej taryfie, różnica, próg opłacalności.
-- [ ] Scenariusze przesuwania zużycia: pompa ciepła, EV, bojler.
-- [ ] Statystyki cen: średnia arytmetyczna vs ważona profilem, dzienny spread, godziny ujemne,
-      najtańsze okna 2/3/4 h.
-- [ ] Raport (HTML/Markdown z wykresami) + skill `analiza-oplacalnosci`, gdy powstanie kalkulator.
-
-## P4 — automatyzacja
-
-- [x] Comiesięczne pobieranie w GitHub Actions (`.github/workflows/aktualizuj-dane.yml`): 1. dnia miesiąca,
-      walidacja blokuje commit, ręczne uruchomienie z wyborem miesiąca.
-- [ ] CI: `ruff` + `pytest` na PR.
+- Daty dostawy zamiast dat sesji w całym szeregu + ponowne pobranie 2025-01 … 2026-09
+  (kontrola: czerwiec 2025 = stare dane przesunięte o +1 dzień, 720/720 godzin).
+- Styczeń 2026 (dni 22–31 były puste albo skopiowane) i brakujące miesiące 2026-02 … 2026-08.
+- `pobierz_dane.py`: automatyczny wybór źródła, weryfikacja daty dostawy z nagłówka, odrzucanie dni bez
+  notowań, kopii poprzedniego dnia i niezakończonego miesiąca, zapis atomowy, retry, `--pomin-braki`, `--niepelny`.
+- `waliduj_dane.py` (kontrola jakości CSV), `generuj_rok.py` (heatmapy roczne), wspólna paleta
+  w `generuj_heatmap.py`, `start.sh` jako cały pipeline.
+- GitHub Actions: comiesięczne pobranie + walidacja + wykresy + commit (push z runnera potwierdzony).
+- `.gitignore`, `AGENTS.md`, `CLAUDE.md`, skille w `.claude/skills` i `.agents/skills`, `.venv` na Pythonie 3.12.
+- Kalkulator magazynu energii (`kalkulator.html` + `przygotuj_kalkulator.py`).
