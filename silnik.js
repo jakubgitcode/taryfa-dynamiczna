@@ -42,12 +42,30 @@
       );
     for (const id of ["magazyn", "pv"])
       wymagaj(typeof p[id] === "boolean", `Niepoprawny wybór: ${id}.`);
-    liczba("zuzycie", 0);
+    if (p.profil !== "wlasny") liczba("zuzycie", 0);
+    else
+      wymagaj(
+        Array.isArray(p.mocGodzinowa) &&
+          p.mocGodzinowa.length === 24 &&
+          p.mocGodzinowa.every(
+            (v) => Number.isFinite(v) && v >= 0 && v <= 1000,
+          ),
+        "Profil musi zawierać 24 wartości od 0 do 1000 kW.",
+      );
     for (const id of ["g11", "marza", "dystrybucja", "stale", "akcyza"])
       liczba(id, 0);
     liczba("vat", 0, 100);
-    wymagaj(["dom", "plaski"].includes(p.profil), "Nieznany profil zużycia.");
+    wymagaj(
+      ["dom", "plaski", "wlasny"].includes(p.profil),
+      "Nieznany profil zużycia.",
+    );
     if (p.magazyn) {
+      wymagaj(
+        Number.isInteger(p.godzinyLadowania ?? 4) &&
+          (p.godzinyLadowania ?? 4) >= 1 &&
+          (p.godzinyLadowania ?? 4) <= 24,
+        "Wybierz od 1 do 24 najtańszych godzin.",
+      );
       for (const id of ["pojemnosc", "mocLadowania", "mocRozladowania"])
         liczba(id, 0.001);
       liczba("minSoc", 0, 99);
@@ -142,7 +160,8 @@
       godzina: h,
       czas: 1,
       cena,
-      zuzycie: (dobowe * wagi[i]) / suma,
+      zuzycie:
+        p.profil === "wlasny" ? p.mocGodzinowa[h] : (dobowe * wagi[i]) / suma,
       pv: (dobowePV * pvWagi[i]) / sumaPV,
     }));
   }
@@ -155,8 +174,112 @@
     };
   }
 
-  // Prosta strategia: ładuj na droższe godziny tej samej doby, do kolejnej
-  // tańszej godziny lub nadwyżki PV. Nie jest to optymalizator globalny.
+  // W dobie 25 h powtórzone oznaczenie ma dwa różne numery interwału.
+  // Na 23 h przy X=24 wybieramy wszystkie dostępne interwały.
+  function najtanszeGodziny(profil, p) {
+    return profil
+      .map((w, i) => ({ i, cena: stawki(w.cena, p).razem }))
+      .sort((a, b) => a.cena - b.cena || a.i - b.i)
+      .slice(0, Math.min(p.godzinyLadowania ?? 4, profil.length))
+      .map((w) => w.i);
+  }
+
+  // Model 1: jeden wirtualny cykl na dobę. Kolejność zdarzeń, początkowy SoC
+  // i przenoszenie zapasu są pomijane. Reszta poboru trafia bezpośrednio do sieci.
+  function prostyDzien(profil, p, pv) {
+    const eta = Math.sqrt(p.sprawnosc / 100);
+    const uzyteczna = p.pojemnosc * (1 - p.minSoc / 100);
+    const wybrane = najtanszeGodziny(profil, p);
+    const wiersze = profil.map((w, i) => {
+      const produkcja = pv ? w.pv : 0;
+      const bezposrednio = Math.min(w.zuzycie, produkcja);
+      return {
+        ...w,
+        pv: produkcja,
+        bezposrednio,
+        pobor: w.zuzycie - bezposrednio,
+        eksport: produkcja - bezposrednio,
+        okno: wybrane.includes(i),
+        ladowaniePV: 0,
+        ladowanieSiec: 0,
+        oddane: 0,
+        socPrzed: null,
+        soc: null,
+        powod: "Model prosty — bez chronologii",
+      };
+    });
+    const pokrywalne = wiersze.map((w) =>
+      Math.min(w.pobor, p.mocRozladowania * w.czas),
+    );
+    const potrzeba = pokrywalne.reduce((a, b) => a + b, 0);
+    let brak = Math.min(uzyteczna, potrzeba / eta);
+    // Nadwyżki PV zastępują część ładowania z sieci, z limitem mocy i pojemności.
+    for (const w of wiersze) {
+      w.ladowaniePV = Math.min(w.eksport, p.mocLadowania * w.czas, brak / eta);
+      brak = Math.max(0, brak - w.ladowaniePV * eta);
+      w.eksport -= w.ladowaniePV;
+    }
+    for (const i of wybrane) {
+      const w = wiersze[i];
+      w.ladowanieSiec = Math.min(
+        Math.max(0, p.mocLadowania * w.czas - w.ladowaniePV),
+        brak / eta,
+      );
+      brak = Math.max(0, brak - w.ladowanieSiec * eta);
+    }
+    const dostepne = wiersze.reduce(
+      (s, w) => s + (w.ladowanieSiec + w.ladowaniePV) * eta * eta,
+      0,
+    );
+    const udzial = potrzeba > EPS ? Math.min(1, dostepne / potrzeba) : 0;
+    return wiersze.map((w, i) => {
+      const oddane = pokrywalne[i] * udzial;
+      return {
+        ...w,
+        oddane,
+        import: w.pobor - oddane + w.ladowanieSiec,
+        strata:
+          (w.ladowanieSiec + w.ladowaniePV) * (1 - eta) +
+          oddane * (1 / eta - 1),
+      };
+    });
+  }
+
+  // Prognoza zapasu potrzebnego do końca doby, liczona od końca.
+  // Późniejsze tańsze okna/PV mogą go uzupełnić, ale tylko z dostępną mocą.
+  // Dzięki temu przy kilku równych tanich godzinach nie czekamy do ostatniej,
+  // gdy jedna godzina nie wystarczyłaby na przygotowanie energii na szczyt.
+  function potrzebnyZapas(przyszle, p, pv, cena) {
+    const eta = Math.sqrt(p.sprawnosc / 100);
+    const uzyteczna = p.pojemnosc * (1 - p.minSoc / 100);
+    let potrzeba = 0;
+    for (let i = przyszle.length - 1; i >= 0; i--) {
+      const f = przyszle[i];
+      const reszta = f.zuzycie - (pv ? f.pv : 0);
+      const cenaF = stawki(f.cena, p).razem;
+      if (reszta < 0) {
+        potrzeba = Math.max(
+          0,
+          potrzeba - Math.min(-reszta, p.mocLadowania * f.czas) * eta,
+        );
+      } else if (
+        cenaF < cena - EPS ||
+        ((f.okno ?? true) && cenaF <= cena + EPS)
+      ) {
+        potrzeba = Math.max(0, potrzeba - p.mocLadowania * f.czas * eta);
+      } else if (cenaF > cena / (eta * eta) + EPS) {
+        potrzeba = Math.min(
+          uzyteczna,
+          potrzeba + Math.min(reszta, p.mocRozladowania * f.czas) / eta,
+        );
+      }
+    }
+    return potrzeba;
+  }
+
+  // Model 2: najpierw planowane okna, poza nimi doładowanie przy pustym
+  // zapasie lub cenie niższej od kosztu zapasu, jeśli późniejsze zużycie
+  // uzasadnia zakup po uwzględnieniu strat.
   function krok(w, przyszle, p, stan, bateria, pv) {
     wymagaj(
       Number.isFinite(w.czas) && w.czas > 0 && w.czas <= 1,
@@ -199,37 +322,30 @@
         ),
       );
       dodaj(ladowaniePV, 0);
-      if (ladowaniePV <= EPS && cena > stan.kosztJednostki / eta + EPS) {
+      const zapas = Math.max(0, stan.energia - minimum);
+      const potrzeba = potrzebnyZapas(przyszle, p, pv, cena);
+      const wolnoLadowac =
+        (w.okno ?? true) ||
+        zapas <= EPS ||
+        cena < stan.kosztJednostki * eta - EPS;
+      if (
+        ladowaniePV <= EPS &&
+        nadwyzka <= EPS &&
+        wolnoLadowac &&
+        potrzeba > zapas + EPS
+      ) {
+        ladowanieSiec = Math.min(
+          p.mocLadowania * w.czas,
+          (potrzeba - zapas) / eta,
+        );
+        dodaj(ladowanieSiec, cena);
+      } else if (ladowaniePV <= EPS && cena > stan.kosztJednostki / eta + EPS) {
         oddane = Math.max(
           0,
-          Math.min(
-            pobor,
-            p.mocRozladowania * w.czas,
-            (stan.energia - minimum) * eta,
-          ),
+          Math.min(pobor, p.mocRozladowania * w.czas, zapas * eta),
         );
         stan.energia -= oddane / eta;
         strata += oddane / eta - oddane;
-      }
-      if (ladowaniePV <= EPS && oddane <= EPS && nadwyzka <= EPS) {
-        let potrzeba = 0;
-        for (const f of przyszle) {
-          const cenaF = stawki(f.cena, p).razem;
-          if (cenaF <= cena + EPS || (pv && f.pv > f.zuzycie)) break;
-          if (cenaF > cena / (eta * eta) + EPS) {
-            potrzeba +=
-              Math.min(
-                Math.max(0, f.zuzycie - (pv ? f.pv : 0)),
-                p.mocRozladowania * f.czas,
-              ) / eta;
-          }
-        }
-        const brak = Math.max(
-          0,
-          Math.min(p.pojemnosc - minimum, potrzeba) - (stan.energia - minimum),
-        );
-        ladowanieSiec = Math.min(p.mocLadowania * w.czas, brak / eta);
-        dodaj(ladowanieSiec, cena);
       }
     }
     return {
@@ -244,6 +360,20 @@
       strata,
       socPrzed: przed,
       soc: stan?.energia || 0,
+      powod:
+        ladowaniePV > EPS
+          ? "Ładowanie nadwyżką PV"
+          : ladowanieSiec > EPS
+            ? (w.okno ?? true)
+              ? "Ładowanie w wybranym oknie"
+              : "Doładowanie przed droższymi godzinami"
+            : oddane > EPS
+              ? "Zużycie z magazynu"
+              : pobor > EPS
+                ? "Zakup bezpośredni z sieci"
+                : bezposrednio > EPS
+                  ? "PV pokrywa zużycie"
+                  : "Brak poboru",
     };
   }
 
@@ -261,6 +391,11 @@
       strata: 0,
       zuzycie: 0,
       pv: 0,
+      ladowanieSiec: 0,
+      ladowaniePV: 0,
+      kosztLadowania: 0,
+      kosztZakupu: 0,
+      oddane: 0,
     };
   }
   function dodajSume(cel, skladniki) {
@@ -295,6 +430,16 @@
         bateria: true,
         pv: true,
       });
+    // Wyniki modelu 1 są oddzielone od głównego porównania i oceny inwestycji.
+    for (const v of [...definicje])
+      if (v.bateria)
+        definicje.push({
+          ...v,
+          id: v.id + "Prosty",
+          baza: v.id,
+          model: "prosty",
+          nazwa: v.nazwa + " — model prosty",
+        });
     // Jawne rozliczenie różnicy zapasu: energia oddawalna × pierwsza nieujemna
     // stawka zakupu. Dzięki temu początkowy zapas nie jest darmowym źródłem.
     const odniesienie = Math.max(0, stawki(dni[0].ceny[0][1], p).razem);
@@ -303,10 +448,12 @@
       suma: pustaSuma(),
       miesiace: {},
       przebieg: [],
-      stan: v.bateria ? nowyStan(p, odniesienie) : null,
+      stan: v.bateria && v.model !== "prosty" ? nowyStan(p, odniesienie) : null,
     }));
     for (const dzien of dni) {
-      const profil = profilDnia(dzien, p);
+      const surowy = profilDnia(dzien, p);
+      const okno = p.magazyn ? najtanszeGodziny(surowy, p) : [];
+      const profil = surowy.map((w, i) => ({ ...w, okno: okno.includes(i) }));
       const miesiac = dzien.data.slice(0, 7);
       for (const v of warianty) {
         const mies = (v.miesiace[miesiac] ||= pustaSuma());
@@ -318,19 +465,20 @@
         };
         dodajSume(v.suma, oplata);
         dodajSume(mies, oplata);
-        for (let i = 0; i < profil.length; i++) {
-          const w = krok(
-            profil[i],
-            profil.slice(i + 1),
-            p,
-            v.stan,
-            v.bateria,
-            v.pv,
-          );
+        const przebieg =
+          v.model === "prosty"
+            ? prostyDzien(profil, p, v.pv)
+            : profil.map((w, i) =>
+                krok(w, profil.slice(i + 1), p, v.stan, v.bateria, v.pv),
+              );
+        for (const w of przebieg) {
           const s = stawki(w.cena, p, v.id === "g11");
-          const korekta = v.bateria
-            ? (w.socPrzed - w.soc) * Math.sqrt(p.sprawnosc / 100) * odniesienie
-            : 0;
+          const korekta =
+            v.bateria && v.model !== "prosty"
+              ? (w.socPrzed - w.soc) *
+                Math.sqrt(p.sprawnosc / 100) *
+                odniesienie
+              : 0;
           const koszty = {
             energia: w.import * s.energia,
             dystrybucja: w.import * s.dystrybucja,
@@ -343,10 +491,22 @@
             strata: w.strata,
             zuzycie: w.zuzycie,
             pv: w.pv,
+            ladowanieSiec: w.ladowanieSiec,
+            ladowaniePV: w.ladowaniePV,
+            kosztLadowania: w.ladowanieSiec * s.razem,
+            kosztZakupu: w.import * s.razem,
+            oddane: w.oddane,
           };
           dodajSume(v.suma, koszty);
           dodajSume(mies, koszty);
-          v.przebieg.push({ ...w, koszt: koszty.koszt });
+          v.przebieg.push({
+            ...w,
+            koszt: koszty.koszt,
+            stawka: s.razem,
+            kosztZakupu: koszty.kosztZakupu,
+            kosztLadowania: koszty.kosztLadowania,
+            korekta,
+          });
         }
       }
     }
@@ -362,7 +522,10 @@
       pelnyRok,
       zrodla: [...new Set(dni.map((d) => d.zrodlo))],
       odniesienie,
-      warianty,
+      warianty: warianty.filter((v) => v.model !== "prosty"),
+      modeleProste: warianty.filter((v) => v.model === "prosty"),
+      godzinyLadowania: p.godzinyLadowania ?? 4,
+      rezerwa: p.magazyn ? (p.pojemnosc * p.minSoc) / 100 : 0,
     };
   }
 
@@ -419,6 +582,8 @@
     wybierzDni,
     profilDnia,
     nowyStan,
+    najtanszeGodziny,
+    prostyDzien,
     krok,
     symuluj,
     zwrot,

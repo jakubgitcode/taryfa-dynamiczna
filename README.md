@@ -31,10 +31,8 @@ localStorage obliczenia nadal działają. Reset wymaga ponownego zapisu.
   ograniczeniem obu mocy i stratami. Moce dotyczą strony AC; sprawność kierunku
   jest pierwiastkiem sprawności pełnego cyklu. Nie ma jednoczesnego ładowania
   i rozładowania ani sprzedaży energii z magazynu.
-- Prosty harmonogram ładuje na droższe godziny tej samej doby, do kolejnej
-  tańszej godziny lub nadwyżki PV. Uwzględnia koszt strat. To **heurystyka**,
-  nie globalne optimum; używa znanych cen dobowych i idealnego modelowego
-  profilu zużycia/PV, więc wynik nie jest gwarancją oszczędności.
+- Dwa modele magazynu opisane poniżej: przybliżenie dobowe i fizyczny bilans
+  godzinowy. Podsumowanie inwestycji korzysta wyłącznie z bilansu godzinowego.
 - PV zasila dom, potem magazyn, a nadwyżkę eksportujemy. **Eksport ma przychód
   0 zł**. Nie implementujemy jeszcze rozliczenia konkretnego net-billingu.
 - Zmiana zapasu energii jest wyceniana osobno: `(SoC początkowy − końcowy) ×
@@ -42,14 +40,66 @@ localStorage obliczenia nadal działają. Reset wymaga ponownego zapisu.
   wchodzi do kosztu modelowego, ale nie jest płatnością na fakturze.
 - Oszczędność samego magazynu porównujemy z dynamiczną bez magazynu; przy PV
   pokazujemy także przyrost korzyści względem PV bez magazynu.
-- Prosty zwrot jest dostępny tylko dla pełnego roku. Nie przeliczamy miesięcy
-  na rok mnożnikiem 365/liczba dni. Zwrot pomija degradację, koszt kapitału
-  i wymianę urządzeń.
+- Szczegółowy prosty zwrot wymaga pełnego roku. Dodane podsumowanie inwestycji
+  ekstrapoluje wynik okresu mnożnikiem 365/liczba dni i oznacza takie wyniki;
+  sezonowość zużycia, cen i PV może istotnie zmienić tę prognozę. Oba ujęcia
+  pomijają degradację, koszt kapitału i wymianę urządzeń.
 
-Zużycie roczne dzielimy przez liczbę dni roku, a dzienne przez wagi profilu
-w rzeczywistych 23/24/25 interwałach. Produkcja PV ma modelowy rozkład miesięczny
-oraz sinusoidalny profil dobowy. Część opłat stałych przypadająca na dzień
-wynika z liczby dni kalendarzowych miesiąca, nie liczby dostępnych obserwacji.
+## Dwa modele ładowania
+
+Wpisz **X najtańszych godzin doby**. Wybór odbywa się osobno dla każdej doby;
+interwały nie muszą być kolejne. Remisy rozstrzyga wcześniejszy numer interwału.
+W dobie 23 h przy X=24 wybieramy wszystkie interwały, a powtórzone jesienne
+etykiety zachowują oddzielne numery i ceny.
+
+1. **Model prosty:** jeden wirtualny cykl na dobę. Wyznacza energię potrzebną
+   do pokrycia dziennego poboru po bezpośrednim zużyciu PV, do granicy pojemności
+   użytecznej i mocy rozładowania. Nadwyżka PV ładuje pierwsza, a resztę kupuje
+   w X najtańszych interwałach, zaczynając od najtańszego, z limitem mocy i stratami.
+   Energię oddaną przypisuje proporcjonalnie do pokrywalnego poboru; reszta
+   jest kupowana bezpośrednio po cenach odpowiednich godzin. Pomija kolejność
+   zdarzeń, początkowy SoC i zapas między dobami. Nie pokazuje fikcyjnego SoC.
+2. **Bilans godzinowy:** rzeczywiste przepływy i SoC. W oknach ładuje tyle,
+   ile uzasadnia droższe zużycie do końca doby. Prognoza uwzględnia ograniczoną
+   moc późniejszych tańszych godzin i PV: kilka równych tanich godzin może być
+   potrzebnych do przygotowania zapasu. Poza oknem doładowuje przy pustym
+   zapasie lub cenie niższej od kosztu zgromadzonej energii, jeśli późniejszy
+   pobór uzasadnia zakup po uwzględnieniu strat. Może kupić brakującą energię
+   bezpośrednio. Nie musi wykorzystać każdego wybranego okna ani wyczerpać
+   magazynu w ciągu doby. Nie ładuje i nie rozładowuje jednocześnie.
+
+Model 2 jest heurystyką, nie globalnym optymalizatorem. Korzysta z cen i
+modelowego zużycia/PV do końca bieżącej doby, bez podglądania kolejnego dnia.
+Horyzont obejmujący następny dzień po publikacji cen pozostaje rozszerzeniem.
+
+Tabela pokazuje dla obu modeli energię i koszt ładowania z sieci, koszt całych
+zakupów, korektę zapasu i łączny koszt. Koszt ładowania obejmuje wszystkie
+zmienne opłaty i VAT; średnia dotyczy pobranej kWh AC, nie kWh oddanej po stratach.
+Opłaty stałe są uwzględnione tylko w łącznym koszcie. Różnica to **model 2 minus
+model 1**. Model 1 nie jest gwarantowaną dolną granicą: pomija chronologię,
+lecz ogranicza liczbę cykli. To porównanie przybliżeń, nie samodzielny pomiar
+korzyści z aktywnego sterowania względem fizycznego sztywnego okna.
+
+Rozwijane szczegóły doby zawierają wybrane okna, ceny RDN i brutto, ładowanie
+z sieci/PV, rozładowanie, zakupy, zapas i koszty każdego interwału. Opis wskazuje
+doładowania poza oknem i pierwsze dojście do rezerwy, jeśli wystąpiło.
+Przycisk w tabeli miesięcznej otwiera pierwszy dostępny dzień tego miesiąca.
+
+## Profil godzinowy
+
+Opcja **Własne 24 wartości w kW** stosuje moce bez skalowania do zużycia rocznego:
+energia interwału = moc × czas. Ten sam profil jest używany każdego dnia;
+w dobie 23/25 h odpowiednia moc jest pomijana/powtarzana. Roczne pole zużycia
+jest wtedy nieaktywne. Edycja, zapis i reset obejmują wszystkie 24 wartości.
+
+Przykładowy profil z wieczornym szczytem daje dokładnie 21,7 kWh w dobie 24 h.
+Presety zimowy i letni są ilustracyjnymi skalowaniami ×1,2 i ×0,75 tego profilu,
+nie pomiarami ani automatycznym modelem sezonowym. Wszystkie wartości można edytować.
+
+Dla dotychczasowych profili zużycie roczne dzielimy przez liczbę dni roku,
+a dzienne przez wagi profilu w 23/24/25 interwałach. Produkcja PV ma modelowy
+rozkład miesięczny i sinusoidalny profil dobowy. Część opłat stałych przypadająca
+na dzień wynika z kalendarzowej liczby dni miesiąca.
 
 ## Dane i ograniczenia
 

@@ -41,34 +41,20 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
 - [x] Nowa strona uwzględnia łączną miesięczną opłatę stałą z formularza (w tym wpisaną opłatę mocową).
 ### Modele ładowania magazynu (`index.html` + `silnik.js`)
 
-Ceny RDN na dobę D są znane w dniu D-1, więc harmonogram ładowania można ustalić z 24 h wyprzedzeniem —
-na danych historycznych liczymy dokładnie tak, jakbyśmy je wtedy znali. To nie jest wróżenie z przyszłości.
-
-- [ ] **Ładowanie przez X najtańszych godzin doby** jako jawny parametr (dziś liczba godzin wynika pośrednio
-      z mocy ładowania). Pokazywać, które godziny wypadły — zimą zwykle 1:00–5:00, latem 10:00–15:00
-      (dolina cen od fotowoltaiki).
-- [ ] **Model 1 — prosty.** Koszt = energia naładowana w tych X godzinach × ceny tych godzin. Bez sprawdzania,
-      czy zapas wystarczy na konkretną godzinę doby. Punkt odniesienia i górna granica optymizmu.
-- [ ] **Model 2 — bilans godzina po godzinie.** Symulacja stanu naładowania: zużycie godzinowe zjada zapas.
-      Moment wyczerpania magazynu **wynika z profilu i pojemności** — nie zakładamy go z góry i przy większym
-      magazynie może nie nastąpić wcale. Gdy zapas się kończy, model decyduje między:
-      (a) dokupieniem brakujących kWh po bieżącej cenie, a
-      (b) doładowaniem magazynu na zapas, jeśli znane ceny kolejnych godzin są wyższe —
-      np. widząc o 13:00, że do 20:00 cena tylko rośnie, dokupujemy wtedy 6 kWh z góry.
-      Decyzja na podstawie cen znanych do końca doby (a po publikacji — także następnej),
-      z uwzględnieniem mocy ładowania, wolnej pojemności i strat.
-- [ ] **Porównanie obu modeli** w wynikach — różnica pokazuje, ile kosztuje uproszczenie i czy warto
-      sterować magazynem aktywnie, czy wystarczy sztywne okno nocne.
-- [ ] **Profil zużycia godzina po godzinie jako wejście do obu modeli** — zamiast jednej liczby dobowej.
-      Edytowalne 24 wartości w kW, z presetami sezonowymi (profil zmienia się z porą roku).
-      Przykład z życia do wpisania jako preset: 0,3 kW w nocy, do 2 kW między 10:00 a 12:00,
-      0,6 kW do 15:00, 2 kW od 19:00 do 1:00 — razem około 18 kWh na dobę.
-      Docelowo zastąpić presety realnymi dobowymi krzywymi (zima / lato / przejściowe),
-      a potem danymi z licznika — patrz „Import profilu zużycia z licznika” niżej.
-- [ ] **Rozwijane szczegóły dla pojedynczej doby.** Tabela: godzina, cena RDN, cena po opłatach, zużycie,
-      ładowanie/rozładowanie, stan magazynu, zakup z sieci, koszt godziny — plus krótki opis słowny,
-      co w tej dobie robimy („ładujemy 1:00–5:00 po 180 zł/MWh, zapas kończy się o 14:00, dokupujemy
-      6 kWh przed wieczornym szczytem” albo „magazyn wystarczył do końca doby”). Do klikania z tabeli miesięcznej.
+- [x] Jawne X najtańszych godzin doby i podgląd wybranych interwałów (także 23/25 h).
+- [x] Model 1 — prosty: jeden wirtualny cykl dobowy, bez chronologii i SoC;
+      moc, pojemność i straty ograniczają pokrycie, pozostały pobór kupowany jest z sieci.
+- [x] Model 2 — bilans godzinowy: okna, zapas między dobami, rzeczywiste wyczerpanie,
+      doładowanie przed droższym poborem przy pustym zapasie lub tańszej cenie niż koszt zapasu.
+      Prognoza do końca doby uwzględnia moc późniejszych tańszych godzin oraz PV.
+- [x] Porównanie obu modeli: koszt ładowania i całych zakupów, korekta zapasu, koszt łączny.
+      Różnica jest podpisana; model prosty nie jest gwarantowaną granicą optymizmu.
+- [x] Własne 24 wartości poboru w kW; przykładowe presety i zapis. Dokładna suma przykładu
+      z wieczornym szczytem wynosi 21,7 kWh/dobę. Presety sezonowe są ilustracyjne.
+- [x] Rozwijane szczegóły doby z tabeli miesiąca: ceny, okna, przepływy, SoC, koszty i opis działań.
+- [ ] Horyzont następnej doby dopiero po potwierdzonym momencie publikacji jej cen.
+      Obecnie oba modele znają wyłącznie ceny bieżącej doby.
+- [ ] Presety z rzeczywistych krzywych sezonowych; import profilu licznika po weryfikacji czasu.
 
 - [ ] Degradacja magazynu (np. −2%/rok) i koszt kapitału — bez tego prosty zwrot jest zbyt optymistyczny.
 - [ ] Import profilu zużycia z licznika (CSV z portalu OSD) zamiast profilu modelowego.
