@@ -164,3 +164,88 @@ test("etykiety i zasoby lokalne są kompletne, identyfikatory unikalne", (t) => 
     assert.ok(fs.existsSync(path.join(katalog, ref)));
   }
 });
+
+test("dwa modele są porównywane osobno, a model prosty nie pokazuje fikcyjnego SoC", async (t) => {
+  const { d, w, ustaw } = strona(t);
+  ustaw("od", "2026-01-01");
+  ustaw("do", "2026-01-01");
+  ustaw("pv", true);
+  ustaw("godzinyLadowania", 2);
+  await oblicz(d);
+  assert.equal(d.getElementById("porownanie-modeli").hidden, false);
+  assert.equal(d.querySelectorAll("#modele tr").length, 4);
+  assert.match(
+    d.getElementById("roznica-modeli").textContent,
+    /model 2 minus model 1/,
+  );
+  assert.equal(d.querySelectorAll("#bilans tr.w-oknie").length, 2);
+  assert.equal(d.querySelectorAll("#zwroty tr").length, 3);
+  const wybor = d.getElementById("model-wykresu");
+  wybor.value = "prosty";
+  wybor.dispatchEvent(new w.Event("change"));
+  assert.equal(d.querySelector("#wykres-soc polyline"), null);
+  assert.match(
+    d.getElementById("opis-dnia").textContent,
+    /Model prosty pomija/,
+  );
+  assert.equal(d.querySelector("#bilans tr").children[12].textContent, "—");
+  wybor.value = "bilans";
+  wybor.dispatchEvent(new w.Event("change"));
+  assert.ok(d.querySelector("#wykres-soc polyline"));
+});
+test("24 moce są używane bez skalowania, zapisywane i odtwarzane", async (t) => {
+  const { d, w, ustaw } = strona(t);
+  ustaw("od", "2026-01-01");
+  ustaw("do", "2026-01-01");
+  ustaw("profil", "wlasny");
+  for (let h = 0; h < 24; h++) ustaw("moc-" + h, 0.5);
+  assert.equal(d.getElementById("zuzycie").disabled, true);
+  assert.match(d.getElementById("suma-profilu").textContent, /12 kWh/);
+  await oblicz(d);
+  assert.match(d.getElementById("status").textContent, /gotowe/);
+  assert.match(d.getElementById("opis-dnia").textContent, /Zużycie: 12 kWh/);
+  const zapis = w.localStorage.getItem(klucz);
+  const druga = strona(t, zapis);
+  assert.equal(druga.d.getElementById("profil").value, "wlasny");
+  assert.equal(druga.d.getElementById("moc-23").value, "0.5");
+  assert.equal(druga.d.getElementById("pola-profil").hidden, false);
+});
+test("błędne X i moc blokują formularz, wyłączenie profilu lub magazynu pomija ich pola", (t) => {
+  const { d, ustaw } = strona(t);
+  ustaw("godzinyLadowania", 1.5);
+  assert.equal(d.getElementById("konfiguracja").checkValidity(), false);
+  ustaw("magazyn", false);
+  assert.equal(d.getElementById("konfiguracja").checkValidity(), true);
+  ustaw("profil", "wlasny");
+  ustaw("moc-2", "");
+  assert.equal(d.getElementById("konfiguracja").checkValidity(), false);
+  ustaw("profil", "dom");
+  assert.equal(d.getElementById("konfiguracja").checkValidity(), true);
+});
+test("preset jest edytowalny, a reset wraca do początkowych ustawień", async (t) => {
+  const { d, ustaw } = strona(t);
+  ustaw("profil", "wlasny");
+  d.querySelector("[data-preset=zima]").click();
+  assert.equal(d.getElementById("moc-0").value, "2.400");
+  ustaw("moc-0", 1.23);
+  assert.equal(d.getElementById("moc-0").value, "1.23");
+  d.getElementById("konfiguracja").reset();
+  await poczekaj();
+  assert.equal(d.getElementById("pola-profil").hidden, true);
+  assert.equal(d.getElementById("moc-0").value, "2");
+  assert.equal(d.getElementById("godzinyLadowania").value, "4");
+});
+test("szczegóły doby otwierają się z miesiąca, a bez magazynu ukrywamy porównanie modeli", async (t) => {
+  const { d, ustaw } = strona(t);
+  ustaw("od", "2026-01-31");
+  ustaw("do", "2026-02-01");
+  await oblicz(d);
+  d.getElementById("szczegoly-dnia").open = false;
+  d.querySelectorAll("#miesiace button")[1].click();
+  assert.equal(d.getElementById("szczegoly-dnia").open, true);
+  assert.equal(d.getElementById("dzien-wykresu").value, "2026-02-01");
+  ustaw("magazyn", false);
+  await oblicz(d);
+  assert.equal(d.getElementById("porownanie-modeli").hidden, true);
+  assert.equal(d.getElementById("model-wykresu").disabled, true);
+});

@@ -470,3 +470,46 @@ td.ocena-nie,
 td.ocena-brak {
   color: #9c3b2e;
 }
+.profil-godziny {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.profil-godziny label {
+  font-size: 11px;
+}
+.profil-godziny input {
+  padding: 10px 6px;
+}
+.presety {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 20px;
+}
+.presety button {
+  font-size: 12px;
+  padding: 9px 12px;
+}
+#szczegoly-dnia {
+  margin-top: 24px;
+}
+#szczegoly-dnia > summary {
+  font-size: 17px;
+  font-weight: 650;
+}
+#bilans tr.w-oknie {
+  background: #eef4e8;
+}
+#miesiace button {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+input:disabled {
+  opacity: 0.55;
+}
+@media (max-width: 520px) {
+  .profil-godziny {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

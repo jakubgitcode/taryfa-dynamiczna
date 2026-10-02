@@ -150,6 +150,19 @@ STAN POCZĄTKOWY
     z TGeBase. Do tego czasu pokryć przypadek fixture'ami i pozostawić kontrolę
     rzeczywistych danych otwartą; nie pobierać przyszłego dnia.
 
+DWA MODELE ŁADOWANIA — KOLEJNY ETAP PO MERGE PR #1
+[x] Jawne X najtańszych godzin i stabilny wybór oddzielnych interwałów DST.
+[x] Model 1: jeden cykl dobowy bez chronologii, z pojemnością, mocą i stratami.
+[x] Model 2: bilans godzinowy, planowanie z ograniczeniem mocy i doładowanie
+    przed droższym poborem. Horyzont pozostaje do końca bieżącej doby.
+[x] Porównanie kosztu ładowania oraz całego kosztu obu modeli, bez fikcyjnego SoC.
+[x] Wspólny profil: 24 edytowalne moce, przykładowe presety, zapis i reset.
+[x] Szczegóły doby z tabeli miesiąca: ceny, przepływy, koszty i opis działania.
+[x] Zachowane podsumowanie inwestycji dodane na main; korzysta tylko z modelu 2.
+[x] Testy lokalne: 33 silnika/modeli + 14 DOM + 15 Python; lint i eksport danych.
+[ ] Weryfikacja UI w rzeczywistej przeglądarce; jsdom nie ocenia renderowania.
+[ ] Rozszerzenie horyzontu o następną dobę po potwierdzonej publikacji cen.
+
 NASTĘPNE ROZSZERZENIA (PO DZIAŁAJĄCEJ WERSJI PODSTAWOWEJ)
 [ ] Profil zużycia z CSV OSD, PVGIS, G12/G12w i zweryfikowane net-billing.
 [ ] Degradacja, koszt kapitału, wrażliwość wyniku i graniczna cena magazynu.

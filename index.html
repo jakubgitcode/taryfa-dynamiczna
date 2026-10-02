@@ -53,7 +53,7 @@
             </div>
             <p class="opis">
               Wybierz ciągły okres. Luka 30.09.2025 wymaga skrócenia zakresu.
-              Nie przeliczamy niepełnego roku na roczny zwrot.
+              Podsumowanie inwestycji oznacza ekstrapolację z niepełnego roku.
             </p>
           </section>
           <section class="karta">
@@ -84,9 +84,381 @@
                 >Profil zużycia<select id="profil" name="profil">
                   <option value="dom">Dom · więcej rano i wieczorem</option>
                   <option value="plaski">Równomierny przez całą dobę</option>
+                  <option value="wlasny">Własne 24 wartości w kW</option>
                 </select>
               </label>
             </div>
+            <fieldset id="pola-profil" disabled hidden>
+              <legend>Godzinowy pobór — średnia moc w każdej godzinie</legend>
+              <p class="opis">
+                Wartości są używane bez skalowania do zużycia rocznego. Ten sam
+                profil obowiązuje w każdym dniu. Przykładowe presety możesz
+                dowolnie poprawić.
+              </p>
+              <div
+                class="presety"
+                role="group"
+                aria-label="Przykładowe profile"
+              >
+                <button
+                  type="button"
+                  class="drugorzedny"
+                  data-preset="przyklad"
+                >
+                  Dom z wieczornym szczytem
+                </button>
+                <button type="button" class="drugorzedny" data-preset="zima">
+                  Przykład zimowy
+                </button>
+                <button type="button" class="drugorzedny" data-preset="lato">
+                  Przykład letni
+                </button>
+              </div>
+              <div class="profil-godziny">
+                <label for="moc-0"
+                  >00:00–01:00<span class="wejscie"
+                    ><input
+                      id="moc-0"
+                      name="moc-0"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-1"
+                  >01:00–02:00<span class="wejscie"
+                    ><input
+                      id="moc-1"
+                      name="moc-1"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-2"
+                  >02:00–03:00<span class="wejscie"
+                    ><input
+                      id="moc-2"
+                      name="moc-2"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-3"
+                  >03:00–04:00<span class="wejscie"
+                    ><input
+                      id="moc-3"
+                      name="moc-3"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-4"
+                  >04:00–05:00<span class="wejscie"
+                    ><input
+                      id="moc-4"
+                      name="moc-4"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-5"
+                  >05:00–06:00<span class="wejscie"
+                    ><input
+                      id="moc-5"
+                      name="moc-5"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-6"
+                  >06:00–07:00<span class="wejscie"
+                    ><input
+                      id="moc-6"
+                      name="moc-6"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-7"
+                  >07:00–08:00<span class="wejscie"
+                    ><input
+                      id="moc-7"
+                      name="moc-7"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-8"
+                  >08:00–09:00<span class="wejscie"
+                    ><input
+                      id="moc-8"
+                      name="moc-8"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-9"
+                  >09:00–10:00<span class="wejscie"
+                    ><input
+                      id="moc-9"
+                      name="moc-9"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-10"
+                  >10:00–11:00<span class="wejscie"
+                    ><input
+                      id="moc-10"
+                      name="moc-10"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-11"
+                  >11:00–12:00<span class="wejscie"
+                    ><input
+                      id="moc-11"
+                      name="moc-11"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-12"
+                  >12:00–13:00<span class="wejscie"
+                    ><input
+                      id="moc-12"
+                      name="moc-12"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.6"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-13"
+                  >13:00–14:00<span class="wejscie"
+                    ><input
+                      id="moc-13"
+                      name="moc-13"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.6"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-14"
+                  >14:00–15:00<span class="wejscie"
+                    ><input
+                      id="moc-14"
+                      name="moc-14"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.6"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-15"
+                  >15:00–16:00<span class="wejscie"
+                    ><input
+                      id="moc-15"
+                      name="moc-15"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-16"
+                  >16:00–17:00<span class="wejscie"
+                    ><input
+                      id="moc-16"
+                      name="moc-16"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-17"
+                  >17:00–18:00<span class="wejscie"
+                    ><input
+                      id="moc-17"
+                      name="moc-17"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-18"
+                  >18:00–19:00<span class="wejscie"
+                    ><input
+                      id="moc-18"
+                      name="moc-18"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="0.3"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-19"
+                  >19:00–20:00<span class="wejscie"
+                    ><input
+                      id="moc-19"
+                      name="moc-19"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-20"
+                  >20:00–21:00<span class="wejscie"
+                    ><input
+                      id="moc-20"
+                      name="moc-20"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-21"
+                  >21:00–22:00<span class="wejscie"
+                    ><input
+                      id="moc-21"
+                      name="moc-21"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-22"
+                  >22:00–23:00<span class="wejscie"
+                    ><input
+                      id="moc-22"
+                      name="moc-22"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+                <label for="moc-23"
+                  >23:00–24:00<span class="wejscie"
+                    ><input
+                      id="moc-23"
+                      name="moc-23"
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="any"
+                      value="2"
+                      required
+                    /><span>kW</span></span
+                  ></label
+                >
+              </div>
+              <p class="opis" id="suma-profilu" role="status"></p>
+              <p class="opis">
+                Doba 23/25 h pomija lub powtarza moc odpowiedniego interwału
+                TGE. Są to etykiety źródłowe; mapowanie czasu licznika nie jest
+                jeszcze dostępne.
+              </p>
+            </fieldset>
           </section>
           <section class="karta">
             <div class="tytul">
@@ -200,6 +572,27 @@
             </p>
             <fieldset id="pola-magazyn">
               <legend class="sr">Parametry magazynu</legend>
+              <label for="godzinyLadowania"
+                >Liczba najtańszych godzin doby (X)<span class="wejscie"
+                  ><input
+                    id="godzinyLadowania"
+                    name="godzinyLadowania"
+                    type="number"
+                    min="1"
+                    max="24"
+                    step="1"
+                    value="4"
+                    required
+                  /><span>h</span></span
+                ></label
+              >
+              <p class="opis">
+                Godziny nie muszą następować po sobie. Model prosty kupuje w
+                tych godzinach; bilans godzinowy może dodatkowo doładować przed
+                droższymi godzinami przy pustym zapasie lub cenie niższej od
+                kosztu zgromadzonej energii. W dobie 23 h X=24 oznacza wszystkie
+                dostępne godziny.
+              </p>
               <div class="pola">
                 <label for="pojemnosc"
                   >Pojemność nominalna<span class="wejscie">
@@ -438,6 +831,47 @@
         </div>
         <p id="stan-wynikow" role="status" class="opis"></p>
         <p id="opis-wynikow" class="opis"></p>
+        <div id="porownanie-modeli" hidden>
+          <h3>Dwa modele kosztu ładowania</h3>
+          <p class="opis">
+            Model 1: jeden cykl dobowy w X najtańszych godzinach, bez kolejności
+            zdarzeń i przenoszenia zapasu. Model 2: bilans godzinowy z rezerwą,
+            mocą i doładowaniem przed droższymi godzinami. Oba wykorzystują ten
+            sam profil.
+          </p>
+          <div class="tabela">
+            <table>
+              <caption>
+                Ładowanie z sieci i łączny koszt za wybrany okres
+              </caption>
+              <thead>
+                <tr>
+                  <th>Wariant</th>
+                  <th>Model</th>
+                  <th>Ładowanie z sieci kWh</th>
+                  <th>Koszt ładowania</th>
+                  <th>Średnio zł/kWh ładowania</th>
+                  <th>Zakupy z sieci</th>
+                  <th>Korekta zapasu</th>
+                  <th>Łączny koszt</th>
+                </tr>
+              </thead>
+              <tbody id="modele"></tbody>
+            </table>
+          </div>
+          <p class="opis" id="roznica-modeli"></p>
+          <p class="opis">
+            Koszt ładowania obejmuje energię, marżę, dystrybucję, akcyzę i VAT,
+            bez opłat stałych. Średnia dotyczy kWh pobranej do magazynu po
+            stronie AC. Łączny koszt obejmuje cały pobór, opłaty stałe i korektę
+            zapasu. Model prosty nie jest gwarantowaną dolną granicą kosztu;
+            różnica nie mierzy osobno korzyści z aktywnego sterowania.
+          </p>
+        </div>
+        <p class="opis">
+          Główne porównanie i podsumowanie inwestycji poniżej dotyczą modelu 2 —
+          bilansu godzinowego.
+        </p>
         <p id="werdykt" class="werdykt"></p>
         <div class="tabela">
           <table>
@@ -503,42 +937,59 @@
         <div class="tabela">
           <table id="miesiace"></table>
         </div>
-        <h3>Bilans wybranego dnia</h3>
-        <div class="pola">
-          <label for="dzien-wykresu"
-            >Dzień dostawy<select id="dzien-wykresu"></select>
-          </label>
-          <label for="wariant-wykresu"
-            >Wariant<select id="wariant-wykresu"></select>
-          </label>
-        </div>
-        <svg
-          id="wykres-soc"
-          viewBox="0 0 800 200"
-          role="img"
-          aria-label="Battery state of charge"
-        ></svg>
-        <div class="tabela przebieg">
-          <table>
-            <caption>
-              Kolejność godzin dostawy TGE — etykiety źródłowe, nie UTC
-            </caption>
-            <thead>
-              <tr>
-                <th>Interwał</th>
-                <th>TGE</th>
-                <th>Zużycie kWh</th>
-                <th>PV kWh</th>
-                <th>Import kWh</th>
-                <th>Eksport kWh</th>
-                <th>Ładowanie kWh</th>
-                <th>Oddane kWh</th>
-                <th>Zapas kWh</th>
-              </tr>
-            </thead>
-            <tbody id="bilans"></tbody>
-          </table>
-        </div>
+        <details id="szczegoly-dnia" open>
+          <summary>Bilans wybranego dnia</summary>
+          <div class="pola">
+            <label for="dzien-wykresu"
+              >Dzień dostawy<select id="dzien-wykresu"></select>
+            </label>
+            <label for="model-wykresu"
+              >Model<select id="model-wykresu">
+                <option value="bilans">2 — bilans godzinowy</option>
+                <option value="prosty">1 — prosty (bez SoC)</option>
+              </select></label
+            >
+            <label for="wariant-wykresu"
+              >Wariant<select id="wariant-wykresu"></select>
+            </label>
+          </div>
+          <p class="opis" id="opis-dnia"></p>
+          <svg
+            id="wykres-soc"
+            viewBox="0 0 800 200"
+            role="img"
+            aria-label="Battery state of charge"
+          ></svg>
+          <div class="tabela przebieg">
+            <table>
+              <caption>
+                Kolejność godzin dostawy TGE — etykiety źródłowe, nie UTC
+              </caption>
+              <thead>
+                <tr>
+                  <th>Interwał</th>
+                  <th>TGE</th>
+                  <th>Wybrane okno</th>
+                  <th>RDN zł/MWh</th>
+                  <th>Zakup zł/kWh brutto</th>
+                  <th>Zużycie kWh</th>
+                  <th>PV kWh</th>
+                  <th>Import kWh</th>
+                  <th>Eksport kWh</th>
+                  <th>Ładowanie sieć kWh</th>
+                  <th>Ładowanie PV kWh</th>
+                  <th>Oddane kWh</th>
+                  <th>Zapas kWh</th>
+                  <th>Koszt zakupów zł</th>
+                  <th>Korekta zapasu zł</th>
+                  <th>Koszt modelowy zł</th>
+                  <th>Działanie</th>
+                </tr>
+              </thead>
+              <tbody id="bilans"></tbody>
+            </table>
+          </div>
+        </details>
       </section>
       <section class="karta">
         <h2>Założenia modelu</h2>
@@ -556,10 +1007,14 @@
             Energia pozostaje w magazynie między dobami.
           </li>
           <li>
-            Strategia ładuje na droższe godziny tej samej doby, do kolejnej
-            tańszej godziny lub nadwyżki PV. To prosta heurystyka, nie globalne
-            optimum. Zakładamy znajomość dobowych cen oraz modelowego zużycia i
-            PV; rzeczywiste prognozy mogą być mniej trafne.
+            Model godzinowy planuje ładowanie w X najtańszych godzinach,
+            uwzględniając zapotrzebowanie do końca doby oraz moc późniejszych
+            tańszych okien i PV. Poza oknem doładowuje przy pustym zapasie lub
+            cenie niższej od kosztu zgromadzonej energii, jeśli przyszłe zużycie
+            uzasadnia zakup po uwzględnieniu strat. Nie musi ładować w każdej
+            wybranej godzinie. To prosta heurystyka, nie globalne optimum.
+            Zakładamy znajomość dobowych cen oraz modelowego zużycia i PV;
+            rzeczywiste prognozy mogą być mniej trafne.
           </li>
           <li>
             Różnicę zapasu początkowego i końcowego wyceniamy według pierwszej
@@ -569,9 +1024,10 @@
           </li>
           <li>
             Zużycie roczne jest dzielone przez liczbę dni roku, a potem według
-            profilu na rzeczywiste 23/24/25 interwałów. PV jest rozdzielane
-            według miesiąca i modelu dobowego. Etykiety TGE służą do profilu;
-            nie są zweryfikowanymi znacznikami czasu licznika.
+            profilu na rzeczywiste 23/24/25 interwałów. Własny profil kW jest
+            używany bez skalowania — energia interwału to moc × czas. PV jest
+            rozdzielane według miesiąca i modelu dobowego. Etykiety TGE służą do
+            profilu; nie są zweryfikowanymi znacznikami czasu licznika.
           </li>
           <li>
             Eksport PV ma w modelu przychód 0 zł. Nie sprzedajemy energii z
@@ -580,9 +1036,11 @@
             faktury.
           </li>
           <li>
-            Prosty zwrot pokazujemy tylko dla pełnego roku danych. Nie obejmuje
-            degradacji, kosztu kapitału ani wymiany urządzeń. PV i magazyn mogą
-            się nie zwrócić. Stawki w formularzu są przykładowe.
+            Podsumowanie inwestycji ekstrapoluje oszczędności niepełnego roku,
+            co może zniekształcać sezonowy wynik. Szczegółowy prosty zwrot
+            wymaga pełnego roku. Żaden z tych wyników nie obejmuje degradacji,
+            kosztu kapitału ani wymiany urządzeń. PV i magazyn mogą się nie
+            zwrócić. Stawki w formularzu są przykładowe.
           </li>
         </ul>
       </section>

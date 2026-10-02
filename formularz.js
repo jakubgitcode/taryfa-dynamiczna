@@ -42,7 +42,7 @@ function nieaktualne() {
   }
 }
 function konfiguracja() {
-  return Object.fromEntries(
+  const p = Object.fromEntries(
     pola.map((p) => [
       p.id,
       p.type === "checkbox"
@@ -52,9 +52,15 @@ function konfiguracja() {
           : p.value,
     ]),
   );
+  p.mocGodzinowa = Array.from({ length: 24 }, (_, h) => wartosc("moc-" + h));
+  return p;
 }
 
 function odswiez() {
+  const wlasny = document.getElementById("profil").value === "wlasny";
+  document.getElementById("pola-profil").disabled = !wlasny;
+  document.getElementById("pola-profil").hidden = !wlasny;
+  document.getElementById("zuzycie").disabled = wlasny;
   for (const id of ["magazyn", "pv"]) {
     const grupa = document.getElementById("pola-" + id);
     grupa.disabled = !wlaczone(id);
@@ -85,7 +91,17 @@ function odswiez() {
       ? liczba.format(v) + " " + jednostka
       : "—";
   };
-  const zuzycie = poprawne(["zuzycie"]) ? wartosc("zuzycie") : NaN;
+  const moce = Array.from({ length: 24 }, (_, h) => wartosc("moc-" + h));
+  const profilPoprawny = poprawne(moce.map((_, h) => "moc-" + h));
+  const dobowe = profilPoprawny ? moce.reduce((a, b) => a + b, 0) : NaN;
+  document.getElementById("suma-profilu").textContent = Number.isFinite(dobowe)
+    ? `${liczba.format(dobowe)} kWh w zwykłej dobie 24 h. Orientacyjnie ${liczba.format(dobowe * 365)} kWh w 365 takich dobach.`
+    : "Uzupełnij 24 poprawne wartości mocy.";
+  const zuzycie = wlasny
+    ? dobowe * 365
+    : poprawne(["zuzycie"])
+      ? wartosc("zuzycie")
+      : NaN;
   pokaz("zuzycie", zuzycie, "kWh");
   pokaz("doba", zuzycie / 365, "kWh");
   pokaz(
@@ -110,6 +126,34 @@ function odswiez() {
       : 0) +
     (wlaczone("pv") ? (poprawne(["kosztPV"]) ? wartosc("kosztPV") : NaN) : 0);
   pokaz("koszt", koszt, "zł");
+}
+const profilPrzykladowy = [
+  2,
+  ...Array(9).fill(0.3),
+  2,
+  2,
+  0.6,
+  0.6,
+  0.6,
+  0.3,
+  0.3,
+  0.3,
+  0.3,
+  ...Array(5).fill(2),
+];
+for (const przycisk of document.querySelectorAll("[data-preset]")) {
+  przycisk.addEventListener("click", () => {
+    const mnoznik = { przyklad: 1, zima: 1.2, lato: 0.75 }[
+      przycisk.dataset.preset
+    ];
+    for (let h = 0; h < 24; h++)
+      document.getElementById("moc-" + h).value = (
+        profilPrzykladowy[h] * mnoznik
+      ).toFixed(3);
+    odswiez();
+    nieaktualne();
+    komunikat("Wczytano przykładowy profil. Możesz poprawić każdą godzinę.");
+  });
 }
 formularz.addEventListener("input", () => {
   odswiez();
@@ -214,6 +258,7 @@ function wiersz(tbody, wartosci) {
     tr.append(td);
   }
   tbody.append(tr);
+  return tr;
 }
 const kwota = (v) =>
   new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(
@@ -230,6 +275,38 @@ function opcje(id, lista) {
     select.append(o);
   }
 }
+function pokazModele() {
+  const proste = wynik.modeleProste || [];
+  document.getElementById("porownanie-modeli").hidden = proste.length === 0;
+  const tabela = document.getElementById("modele");
+  tabela.replaceChildren();
+  const roznice = [];
+  for (const prosty of proste) {
+    const bilans = wynik.warianty.find((v) => v.id === prosty.baza);
+    for (const [v, nazwa] of [
+      [prosty, "1 — prosty"],
+      [bilans, "2 — bilans godzinowy"],
+    ]) {
+      const s = v.suma;
+      wiersz(tabela, [
+        bilans.nazwa,
+        nazwa,
+        energia(s.ladowanieSiec),
+        kwota(s.kosztLadowania),
+        s.ladowanieSiec > 1e-8
+          ? kwota(s.kosztLadowania / s.ladowanieSiec)
+          : "—",
+        kwota(s.kosztZakupu),
+        kwota(s.korekta),
+        kwota(s.koszt),
+      ]);
+    }
+    roznice.push(
+      `${bilans.nazwa}: model 2 minus model 1 = ${kwota(bilans.suma.koszt - prosty.suma.koszt)}.`,
+    );
+  }
+  document.getElementById("roznica-modeli").textContent = roznice.join(" ");
+}
 function pokazWyniki(p) {
   const sekcja = document.getElementById("wyniki");
   sekcja.hidden = false;
@@ -238,6 +315,7 @@ function pokazWyniki(p) {
     "Wyniki zgodne z zatwierdzonymi parametrami.";
   document.getElementById("opis-wynikow").textContent =
     `${wynik.od} – ${wynik.do} · ${wynik.dni} dni · ${wynik.godziny} godzin. Źródła: ${wynik.zrodla.map((s) => dane.zrodla[s] || s).join(", ")}. Wycena zapasu: ${kwota(wynik.odniesienie)}/kWh oddawalnej. Eksport bez przychodu.`;
+  pokazModele();
   const bazowy = wynik.warianty[0].suma.koszt;
   const tabela = document.getElementById("porownanie");
   tabela.replaceChildren();
@@ -347,8 +425,25 @@ function pokazWyniki(p) {
   miesiace.append(head);
   const body = document.createElement("tbody");
   miesiace.append(body);
-  for (const m of Object.keys(wynik.warianty[0].miesiace))
-    wiersz(body, [m, ...wynik.warianty.map((v) => kwota(v.miesiace[m].koszt))]);
+  for (const m of Object.keys(wynik.warianty[0].miesiace)) {
+    const tr = wiersz(body, [
+      m,
+      ...wynik.warianty.map((v) => kwota(v.miesiace[m].koszt)),
+    ]);
+    const otworz = document.createElement("button");
+    otworz.type = "button";
+    otworz.className = "drugorzedny";
+    otworz.textContent = m + " · szczegóły";
+    otworz.addEventListener("click", () => {
+      document.getElementById("dzien-wykresu").value =
+        wynik.warianty[0].przebieg.find((w) => w.data.startsWith(m)).data;
+      const szczegoly = document.getElementById("szczegoly-dnia");
+      szczegoly.open = true;
+      pokazDzien();
+      document.getElementById("dzien-wykresu").focus();
+    });
+    tr.firstChild.replaceChildren(otworz);
+  }
   opcje(
     "dzien-wykresu",
     [...new Set(wynik.warianty[0].przebieg.map((w) => w.data))].map((d) => [
@@ -361,32 +456,88 @@ function pokazWyniki(p) {
     wynik.warianty.map((v) => [v.id, v.nazwa]),
   );
   document.getElementById("wariant-wykresu").value = wynik.warianty.at(-1).id;
+  document.getElementById("model-wykresu").value = "bilans";
   pokazDzien();
 }
 function pokazDzien() {
   if (!wynik) return;
-  const v = wynik.warianty.find(
+  const bazowy = wynik.warianty.find(
     (v) => v.id === document.getElementById("wariant-wykresu").value,
   );
+  const wybor = document.getElementById("model-wykresu");
+  wybor.disabled = !bazowy.bateria;
+  if (!bazowy.bateria) wybor.value = "bilans";
+  const prosty = wybor.value === "prosty";
+  const v = prosty
+    ? wynik.modeleProste.find((v) => v.baza === bazowy.id)
+    : bazowy;
   const wiersze = v.przebieg.filter(
     (w) => w.data === document.getElementById("dzien-wykresu").value,
   );
   const body = document.getElementById("bilans");
   body.replaceChildren();
-  for (const w of wiersze)
-    wiersz(body, [
+  for (const w of wiersze) {
+    const tr = wiersz(body, [
       w.nr,
       `${w.godzina}–${w.godzina + 1}`,
+      bazowy.bateria && w.okno ? "Tak" : "—",
+      energia(w.cena),
+      kwota(w.stawka),
       ...[
         w.zuzycie,
         w.pv,
         w.import,
         w.eksport,
-        w.ladowaniePV + w.ladowanieSiec,
+        w.ladowanieSiec,
+        w.ladowaniePV,
         w.oddane,
-        w.soc,
       ].map(energia),
+      w.soc === null ? "—" : energia(w.soc),
+      kwota(w.kosztZakupu),
+      kwota(w.korekta),
+      kwota(w.koszt),
+      w.powod,
     ]);
+    tr.classList.toggle("w-oknie", bazowy.bateria && w.okno);
+  }
+  const suma = (klucz) => wiersze.reduce((s, w) => s + w[klucz], 0);
+  const etykieta = (w) => `${w.godzina}–${w.godzina + 1} (#${w.nr})`;
+  const okna = wiersze.filter((w) => w.okno);
+  const opis = [
+    `Zużycie: ${energia(suma("zuzycie"))} kWh. Zakupy z sieci: ${kwota(suma("kosztZakupu"))} (bez opłat stałych).`,
+  ];
+  if (bazowy.bateria) {
+    opis.push(
+      `Wybrane ${okna.length} najtańszych godzin: ${okna.map(etykieta).join(", ")}.`,
+      `Ładowanie z sieci: ${energia(suma("ladowanieSiec"))} kWh za ${kwota(suma("kosztLadowania"))}.`,
+    );
+    if (prosty)
+      opis.push(
+        "Model prosty pomija kolejność zdarzeń i zapas między dobami. Nie wyznacza momentu wyczerpania magazynu.",
+      );
+    else {
+      const doladowania = wiersze.filter(
+        (w) => !w.okno && w.ladowanieSiec > 1e-8,
+      );
+      opis.push(
+        doladowania.length
+          ? `Doładowanie poza oknem: ${energia(doladowania.reduce((s, w) => s + w.ladowanieSiec, 0))} kWh, godziny ${doladowania.map(etykieta).join(", ")}.`
+          : "Brak doładowania poza oknem.",
+      );
+      const wyczerpanie = wiersze.find(
+        (w) => w.oddane > 1e-8 && w.soc <= wynik.rezerwa + 1e-8,
+      );
+      opis.push(
+        wyczerpanie
+          ? `Pierwsze dojście do rezerwy: koniec interwału ${etykieta(wyczerpanie)}.`
+          : "W tej dobie rozładowanie nie doprowadziło do rezerwy.",
+      );
+      opis.push(
+        `Zapas na początku: ${energia(wiersze[0].socPrzed)} kWh, na końcu: ${energia(wiersze.at(-1).soc)} kWh.`,
+      );
+    }
+  }
+  document.getElementById("opis-dnia").textContent = opis.join(" ");
   const svg = document.getElementById("wykres-soc");
   svg.replaceChildren();
   const el = (tag, attrs, text) => {
@@ -397,6 +548,14 @@ function pokazDzien() {
     return e;
   };
   el("text", { x: 20, y: 24 }, "Battery state of charge (kWh)");
+  if (prosty) {
+    el(
+      "text",
+      { x: 20, y: 100 },
+      "Daily approximation — no chronological state of charge",
+    );
+    return;
+  }
   if (!v.bateria) {
     el("text", { x: 20, y: 100 }, "No battery in this scenario");
     return;
@@ -420,5 +579,5 @@ function pokazDzien() {
   el("text", { x: 50, y: 188 }, "Start");
   el("text", { x: 640, y: 188 }, "Delivery intervals →");
 }
-for (const id of ["dzien-wykresu", "wariant-wykresu"])
+for (const id of ["dzien-wykresu", "wariant-wykresu", "model-wykresu"])
   document.getElementById(id).addEventListener("change", pokazDzien);
