@@ -1,0 +1,14 @@
+{
+  "name": "taryfa-dynamiczna",
+  "private": true,
+  "scripts": {
+    "test": "node --test testy/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.19.0"
+}

@@ -49,7 +49,7 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     errors, warnings = [], []
     m = re.search(r"tge_rdn_hourly_(\d{4})-(\d{2})", path)
     if not m:
-        return [f"nazwa pliku nie pasuje do tge_rdn_hourly_YYYY-MM*.csv"], []
+        return ["nazwa pliku nie pasuje do tge_rdn_hourly_YYYY-MM*.csv"], []
     year, month = int(m.group(1)), int(m.group(2))
 
     with open(path, newline="", encoding="utf-8") as f:

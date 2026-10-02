@@ -9,7 +9,6 @@ import sys
 import os
 import re
 import csv
-from datetime import datetime
 import pandas as pd
 
 def parse_excel_file(filepath):

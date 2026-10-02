@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["testy"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+# Dawne zapisy czatów *.py nie są kodem projektu.
+include = ["eksportuj_dane.py", "pobierz_dane.py", "waliduj_dane.py", "konwertuj_excel.py", "generuj_heatmap.py", "generuj_rok.py", "przygotuj_kalkulator.py", "testy/test_*.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

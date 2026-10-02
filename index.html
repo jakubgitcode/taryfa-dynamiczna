@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Twoja energia · kalkulator</title>
+    <link rel="stylesheet" href="formularz.css" />
+    <script src="dane_rdn.js" defer></script>
+    <script src="silnik.js" defer></script>
+    <script src="formularz.js" defer></script>
+  </head>
+  <body>
+    <header class="gora">
+      <a class="marka" href="index.html">
+        <span class="symbol">↯</span> Twoja energia</a
+      >
+      <span class="lokalnie">Działa lokalnie w przeglądarce</span>
+    </header>
+    <main>
+      <div class="wstep">
+        <p class="nadtytul">TARYFA DYNAMICZNA / KALKULATOR</p>
+        <h1>Policz energię dla swojego domu.</h1>
+        <p>
+          Ustaw zużycie, ceny z faktury i parametry instalacji. To podstawa
+          porównania taryf oraz wariantów z magazynem i fotowoltaiką.
+        </p>
+      </div>
+      <ol class="kroki" aria-label="Etapy przygotowania kalkulatora">
+        <li aria-current="step">
+          <b>01</b> Parametry domu <span>Ustaw dane</span>
+        </li>
+        <li><b>02</b> Symulacja godzinowa <span>Bilans magazynu</span></li>
+        <li><b>03</b> Porównanie kosztów <span>Dla wybranego okresu</span></li>
+      </ol>
+      <noscript>
+        <p>Włącz JavaScript, aby sprawdzić i zapisać formularz.</p>
+      </noscript>
+      <div class="uklad">
+        <form id="konfiguracja">
+          <section class="karta">
+            <div class="tytul">
+              <span>00</span>
+              <h2>Okres porównania</h2>
+            </div>
+            <p class="opis" id="zakres-danych">Wczytywanie lokalnych cen…</p>
+            <div class="pola">
+              <label for="od"
+                >Od<input type="date" id="od" name="od" required />
+              </label>
+              <label for="do"
+                >Do<input type="date" id="do" name="do" required />
+              </label>
+            </div>
+            <p class="opis">
+              Wybierz ciągły okres. Luka 30.09.2025 wymaga skrócenia zakresu.
+              Nie przeliczamy niepełnego roku na roczny zwrot.
+            </p>
+          </section>
+          <section class="karta">
+            <div class="tytul">
+              <span>01</span>
+              <h2>Zużycie energii</h2>
+            </div>
+            <p class="opis">
+              Wpisz zużycie z ostatnich 12 miesięcy. Używamy modelowego profilu
+              dobowego, nie odczytów licznika.
+            </p>
+            <div class="pola">
+              <label for="zuzycie"
+                >Roczne zużycie<span class="wejscie">
+                  <input
+                    id="zuzycie"
+                    name="zuzycie"
+                    type="number"
+                    value="4500"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>kWh</span>
+                </span>
+              </label>
+              <label for="profil"
+                >Profil zużycia<select id="profil" name="profil">
+                  <option value="dom">Dom · więcej rano i wieczorem</option>
+                  <option value="plaski">Równomierny przez całą dobę</option>
+                </select>
+              </label>
+            </div>
+          </section>
+          <section class="karta">
+            <div class="tytul">
+              <span>02</span>
+              <h2>Ceny i opłaty</h2>
+            </div>
+            <p class="opis">
+              Przykładowe wartości — zastąp je swoimi. Stawki energii i opłat
+              podaj netto. Cenę G11 podaj bez akcyzy; koszty inwestycji poniżej
+              są brutto.
+            </p>
+            <div class="pola">
+              <label for="g11"
+                >Energia w G11<span class="wejscie">
+                  <input
+                    id="g11"
+                    name="g11"
+                    type="number"
+                    value="0.62"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>zł/kWh</span>
+                </span>
+              </label>
+              <label for="marza"
+                >Marża taryfy dynamicznej<span class="wejscie">
+                  <input
+                    id="marza"
+                    name="marza"
+                    type="number"
+                    value="0.08"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>zł/kWh</span>
+                </span>
+              </label>
+              <label for="dystrybucja"
+                >Dystrybucja zmienna<span class="wejscie">
+                  <input
+                    id="dystrybucja"
+                    name="dystrybucja"
+                    type="number"
+                    value="0.37"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>zł/kWh</span>
+                </span>
+              </label>
+              <label for="stale"
+                >Opłaty stałe łącznie<span class="wejscie">
+                  <input
+                    id="stale"
+                    name="stale"
+                    type="number"
+                    value="30"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>zł/mies.</span>
+                </span>
+              </label>
+              <label for="akcyza"
+                >Akcyza<span class="wejscie">
+                  <input
+                    id="akcyza"
+                    name="akcyza"
+                    type="number"
+                    value="5"
+                    min="0"
+                    step="any"
+                    required
+                  />
+                  <span>zł/MWh</span>
+                </span>
+              </label>
+              <label for="vat"
+                >VAT<span class="wejscie">
+                  <input
+                    id="vat"
+                    name="vat"
+                    type="number"
+                    value="23"
+                    min="0"
+                    max="100"
+                    step="any"
+                    required
+                  />
+                  <span>%</span>
+                </span>
+              </label>
+            </div>
+          </section>
+          <section class="karta">
+            <div class="tytul">
+              <span>03</span>
+              <h2>Magazyn energii</h2>
+              <label class="opcja">
+                <input id="magazyn" name="magazyn" type="checkbox" checked />
+                Uwzględnij</label
+              >
+            </div>
+            <p class="opis">
+              Porównamy taryfę dynamiczną z magazynem i bez niego.
+            </p>
+            <fieldset id="pola-magazyn">
+              <legend class="sr">Parametry magazynu</legend>
+              <div class="pola">
+                <label for="pojemnosc"
+                  >Pojemność nominalna<span class="wejscie">
+                    <input
+                      id="pojemnosc"
+                      name="pojemnosc"
+                      type="number"
+                      value="10"
+                      min="0.1"
+                      step="any"
+                      required
+                    />
+                    <span>kWh</span>
+                  </span>
+                </label>
+                <label for="mocLadowania"
+                  >Moc ładowania<span class="wejscie">
+                    <input
+                      id="mocLadowania"
+                      name="mocLadowania"
+                      type="number"
+                      value="5"
+                      min="0.1"
+                      step="any"
+                      required
+                    />
+                    <span>kW</span>
+                  </span>
+                </label>
+                <label for="mocRozladowania"
+                  >Moc rozładowania<span class="wejscie">
+                    <input
+                      id="mocRozladowania"
+                      name="mocRozladowania"
+                      type="number"
+                      value="5"
+                      min="0.1"
+                      step="any"
+                      required
+                    />
+                    <span>kW</span>
+                  </span>
+                </label>
+                <label for="minSoc"
+                  >Minimalny poziom energii<span class="wejscie">
+                    <input
+                      id="minSoc"
+                      name="minSoc"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="99"
+                      step="any"
+                      required
+                    />
+                    <span>%</span>
+                  </span>
+                </label>
+                <label for="startSoc"
+                  >Początkowy poziom energii<span class="wejscie">
+                    <input
+                      id="startSoc"
+                      name="startSoc"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="any"
+                      required
+                    />
+                    <span>%</span>
+                  </span>
+                </label>
+                <label for="sprawnosc"
+                  >Sprawność pełnego cyklu<span class="wejscie">
+                    <input
+                      id="sprawnosc"
+                      name="sprawnosc"
+                      type="number"
+                      value="88"
+                      min="1"
+                      max="100"
+                      step="any"
+                      required
+                    />
+                    <span>%</span>
+                  </span>
+                </label>
+                <label for="kosztMagazynu"
+                  >Magazyn z montażem<span class="wejscie">
+                    <input
+                      id="kosztMagazynu"
+                      name="kosztMagazynu"
+                      type="number"
+                      value="25000"
+                      min="0"
+                      step="any"
+                      required
+                    />
+                    <span>zł</span>
+                  </span>
+                </label>
+                <label for="kosztInwertera"
+                  >Dodatkowy koszt inwertera<span class="wejscie">
+                    <input
+                      id="kosztInwertera"
+                      name="kosztInwertera"
+                      type="number"
+                      value="9000"
+                      min="0"
+                      step="any"
+                      required
+                    />
+                    <span>zł</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          </section>
+          <section class="karta">
+            <div class="tytul">
+              <span>04</span>
+              <h2>Fotowoltaika</h2>
+              <label class="opcja">
+                <input id="pv" name="pv" type="checkbox" /> Uwzględnij</label
+              >
+            </div>
+            <p class="opis">
+              Opcjonalna instalacja. Symulacja wykorzystuje modelowy profil
+              produkcji. Eksport pokazujemy w kWh, z przychodem 0 zł —
+              rozliczenie net-billingu wymaga osobnego modelu.
+            </p>
+            <fieldset id="pola-pv" disabled hidden>
+              <legend class="sr">Parametry fotowoltaiki</legend>
+              <div class="pola">
+                <label for="kwp"
+                  >Moc instalacji<span class="wejscie">
+                    <input
+                      id="kwp"
+                      name="kwp"
+                      type="number"
+                      value="5"
+                      min="0.1"
+                      step="any"
+                      required
+                    />
+                    <span>kWp</span>
+                  </span>
+                </label>
+                <label for="uzysk"
+                  >Uzysk roczny<span class="wejscie">
+                    <input
+                      id="uzysk"
+                      name="uzysk"
+                      type="number"
+                      value="1000"
+                      min="1"
+                      step="any"
+                      required
+                    />
+                    <span>kWh/kWp</span>
+                  </span>
+                </label>
+                <label for="kosztPV"
+                  >Instalacja z montażem<span class="wejscie">
+                    <input
+                      id="kosztPV"
+                      name="kosztPV"
+                      type="number"
+                      value="17500"
+                      min="0"
+                      step="any"
+                      required
+                    />
+                    <span>zł</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          </section>
+          <div class="akcje">
+            <button type="submit">Zapisz i oblicz <span>→</span></button>
+            <button class="drugorzedny" type="reset">
+              Przywróć przykładowe
+            </button>
+          </div>
+          <p id="status" role="status"></p>
+        </form>
+        <aside>
+          <section class="podsumowanie">
+            <p class="nadtytul">TWÓJ SCENARIUSZ</p>
+            <h2>Gotowy punkt wyjścia</h2>
+            <p class="opis">
+              Podsumowanie parametrów. Po zmianie ustawień kliknij „Zapisz i
+              oblicz”.
+            </p>
+            <dl>
+              <div>
+                <dt>Zużycie roczne</dt>
+                <dd id="s-zuzycie">—</dd>
+              </div>
+              <div>
+                <dt>Średnio na dobę</dt>
+                <dd id="s-doba">—</dd>
+              </div>
+              <div>
+                <dt>Pojemność użyteczna</dt>
+                <dd id="s-magazyn">—</dd>
+              </div>
+              <div>
+                <dt>Moc PV</dt>
+                <dd id="s-pv">—</dd>
+              </div>
+              <div>
+                <dt>Łączna inwestycja</dt>
+                <dd id="s-koszt">—</dd>
+              </div>
+            </dl>
+            <div class="informacja">
+              <b>Co porównujemy?</b>
+              <p>
+                G11 i model taryfy dynamicznej, a także wybrane warianty z
+                magazynem i PV.
+              </p>
+            </div>
+            <p class="prywatnosc">
+              Zapis przechowuje parametry tylko w tej przeglądarce. Dane nie są
+              wysyłane na serwer.
+            </p>
+          </section>
+        </aside>
+      </div>
+      <section id="wyniki" class="karta" aria-labelledby="tytul-wyniki" hidden>
+        <div class="tytul">
+          <h2 id="tytul-wyniki">Porównanie za wybrany okres</h2>
+        </div>
+        <p id="stan-wynikow" role="status" class="opis"></p>
+        <p id="opis-wynikow" class="opis"></p>
+        <div class="tabela">
+          <table>
+            <caption>
+              Koszty i przepływy energii
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Wariant</th>
+                <th scope="col">Koszt modelowy</th>
+                <th scope="col">Oszczędność vs G11</th>
+                <th scope="col">Import kWh</th>
+                <th scope="col">Eksport kWh</th>
+                <th scope="col">Straty kWh</th>
+              </tr>
+            </thead>
+            <tbody id="porownanie"></tbody>
+          </table>
+        </div>
+        <p class="opis" id="zwrot"></p>
+        <details>
+          <summary>Składniki kosztu (zł)</summary>
+          <div class="tabela">
+            <table>
+              <caption>
+                Podział kosztu — korekta zapasu nie jest opłatą na fakturze
+              </caption>
+              <thead>
+                <tr>
+                  <th>Wariant</th>
+                  <th>Energia netto</th>
+                  <th>Dystrybucja netto</th>
+                  <th>Akcyza</th>
+                  <th>VAT</th>
+                  <th>Stałe netto</th>
+                  <th>Korekta zapasu</th>
+                </tr>
+              </thead>
+              <tbody id="skladniki"></tbody>
+            </table>
+          </div>
+        </details>
+        <h3>Koszty miesięczne</h3>
+        <div class="tabela">
+          <table id="miesiace"></table>
+        </div>
+        <h3>Bilans wybranego dnia</h3>
+        <div class="pola">
+          <label for="dzien-wykresu"
+            >Dzień dostawy<select id="dzien-wykresu"></select>
+          </label>
+          <label for="wariant-wykresu"
+            >Wariant<select id="wariant-wykresu"></select>
+          </label>
+        </div>
+        <svg
+          id="wykres-soc"
+          viewBox="0 0 800 200"
+          role="img"
+          aria-label="Battery state of charge"
+        ></svg>
+        <div class="tabela przebieg">
+          <table>
+            <caption>
+              Kolejność godzin dostawy TGE — etykiety źródłowe, nie UTC
+            </caption>
+            <thead>
+              <tr>
+                <th>Interwał</th>
+                <th>TGE</th>
+                <th>Zużycie kWh</th>
+                <th>PV kWh</th>
+                <th>Import kWh</th>
+                <th>Eksport kWh</th>
+                <th>Ładowanie kWh</th>
+                <th>Oddane kWh</th>
+                <th>Zapas kWh</th>
+              </tr>
+            </thead>
+            <tbody id="bilans"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="karta">
+        <h2>Założenia modelu</h2>
+        <ul class="zalozenia">
+          <li>
+            Ceny to historyczne indeksy TGE: Fixing I, raporty XLSX i
+            średnioważona TGeBase. Model nie odtwarza konkretnej umowy
+            sprzedawcy. G11 obejmuje podaną cenę, akcyzę i dystrybucję;
+            wszystkie zakupy i opłaty stałe są powiększane o VAT.
+          </li>
+          <li>
+            Magazyn działa chronologicznie. Moc ładowania i rozładowania jest
+            mierzona po stronie AC. Straty cyklu są dzielone równo pomiędzy oba
+            kierunki (sprawność kierunku = pierwiastek sprawności cyklu).
+            Energia pozostaje w magazynie między dobami.
+          </li>
+          <li>
+            Strategia ładuje na droższe godziny tej samej doby, do kolejnej
+            tańszej godziny lub nadwyżki PV. To prosta heurystyka, nie globalne
+            optimum. Zakładamy znajomość dobowych cen oraz modelowego zużycia i
+            PV; rzeczywiste prognozy mogą być mniej trafne.
+          </li>
+          <li>
+            Różnicę zapasu początkowego i końcowego wyceniamy według pierwszej
+            stawki zakupu brutto, nie niższej niż zero, z uwzględnieniem strat
+            rozładowania. Koszt modelowy zawiera tę korektę; szczegóły pokazują
+            osobno koszty zakupów.
+          </li>
+          <li>
+            Zużycie roczne jest dzielone przez liczbę dni roku, a potem według
+            profilu na rzeczywiste 23/24/25 interwałów. PV jest rozdzielane
+            według miesiąca i modelu dobowego. Etykiety TGE służą do profilu;
+            nie są zweryfikowanymi znacznikami czasu licznika.
+          </li>
+          <li>
+            Eksport PV ma w modelu przychód 0 zł. Nie sprzedajemy energii z
+            magazynu. Opłaty stałe są wspólne dla wariantów i proporcjonalne do
+            liczby dni miesiąca; ich kwotę, w tym opłatę mocową, wpisz z
+            faktury.
+          </li>
+          <li>
+            Prosty zwrot pokazujemy tylko dla pełnego roku danych. Nie obejmuje
+            degradacji, kosztu kapitału ani wymiany urządzeń. PV i magazyn mogą
+            się nie zwrócić. Stawki w formularzu są przykładowe.
+          </li>
+        </ul>
+      </section>
+      <footer>
+        Symulacja lokalna · dane TGE RDN
+        <a href="kalkulator.html">Poprzedni prototyp kalkulatora ↗</a>
+      </footer>
+    </main>
+  </body>
+</html>
