@@ -39,6 +39,30 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
 - [x] Nowy eksporter `eksportuj_dane.py` jest częścią `start.sh` i CI; `dane_rdn.js` odświeża się z heatmapami.
       Starszy `kalkulator.html` pozostaje zamrożonym prototypem. Publikacja hostowanej strony jest osobna.
 - [x] Nowa strona uwzględnia łączną miesięczną opłatę stałą z formularza (w tym wpisaną opłatę mocową).
+### Modele ładowania magazynu (`index.html` + `silnik.js`)
+
+Ceny RDN na dobę D są znane w dniu D-1, więc harmonogram ładowania można ustalić z 24 h wyprzedzeniem —
+na danych historycznych liczymy dokładnie tak, jakbyśmy je wtedy znali. To nie jest wróżenie z przyszłości.
+
+- [ ] **Ładowanie przez X najtańszych godzin doby** jako jawny parametr (dziś liczba godzin wynika pośrednio
+      z mocy ładowania). Pokazywać, które godziny wypadły — zimą zwykle 1:00–5:00, latem 10:00–15:00
+      (dolina cen od fotowoltaiki).
+- [ ] **Model 1 — prosty.** Koszt = energia naładowana w tych X godzinach × ceny tych godzin. Bez sprawdzania,
+      czy zapas wystarczy na konkretną godzinę doby. Punkt odniesienia i górna granica optymizmu.
+- [ ] **Model 2 — bilans godzina po godzinie.** Symulacja stanu naładowania: zużycie zjada zapas, a gdy się
+      skończy (typowo zimą około 13:00, przy drogim prądzie), model decyduje między:
+      (a) dokupieniem brakujących kWh po bieżącej cenie, a
+      (b) doładowaniem magazynu na zapas, jeśli znane ceny kolejnych godzin są wyższe —
+      np. o 13:00 widać, że do 20:00 cena tylko rośnie, więc dokupujemy wtedy 6 kWh z góry.
+      Decyzja na podstawie cen znanych do końca doby (a po publikacji — także następnej),
+      z uwzględnieniem mocy ładowania, wolnej pojemności i strat.
+- [ ] **Porównanie obu modeli** w wynikach — różnica pokazuje, ile kosztuje uproszczenie i czy warto
+      sterować magazynem aktywnie, czy wystarczy sztywne okno nocne.
+- [ ] **Rozwijane szczegóły dla pojedynczej doby.** Tabela: godzina, cena RDN, cena po opłatach, zużycie,
+      ładowanie/rozładowanie, stan magazynu, zakup z sieci, koszt godziny — plus krótki opis słowny,
+      co w tej dobie robimy („ładujemy 1:00–5:00 po 180 zł/MWh, zapas kończy się o 13:00, dokupujemy
+      6 kWh przed wieczornym szczytem”). Do klikania z tabeli miesięcznej.
+
 - [ ] Degradacja magazynu (np. −2%/rok) i koszt kapitału — bez tego prosty zwrot jest zbyt optymistyczny.
 - [ ] Import profilu zużycia z licznika (CSV z portalu OSD) zamiast profilu modelowego.
 - [ ] Produkcja PV z realnych danych (PVGIS dla lokalizacji) zamiast modelu sinusoidalnego.
