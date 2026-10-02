@@ -181,3 +181,20 @@ klawiaturą wymagają osobnego odbioru w rzeczywistej przeglądarce.
 
 `kalkulator.html` i `przygotuj_kalkulator.py` pozostają wcześniejszym prototypem.
 Nowy pipeline aktualizuje `dane_rdn.js`, a nie dane osadzone w prototypie.
+
+### Opcja 3: podlicznik G11 od sąsiada
+
+Włącz „Uwzględnij zakup od sąsiada” i wpisz uzgodnioną **końcową cenę brutto za kWh**.
+Model godzinowy ładuje magazyn z dynamicznej lub nadwyżki PV, a wszystkie bieżące
+braki domu kupuje od sąsiada. Nie wybiera automatycznie tańszego z dwóch przyłączy;
+podlicznik nie ładuje baterii. Zakup do magazynu musi mieć uzasadnienie względem
+ceny podlicznika po uwzględnieniu strat. To heurystyka do końca doby, nie globalne optimum.
+
+Wyniki pokazują osobno zakup z podlicznika (brutto, bez ponownego naliczania podatków),
+ładowanie dynamiczne i porównanie z zakupem całego zużycia od sąsiada. Zwrot dla opcji 3
+wymaga pełnego roku; nakłady obejmują magazyn, inwerter i PV, jeśli włączone.
+Dotychczasowe podsumowanie inwestycji nadal dotyczy modelu 2.
+W każdym wariancie zachowujemy wpisane opłaty stałe własnego przyłącza; zakładamy brak
+odrębnych stałych opłat sąsiada i limitu mocy podlicznika. Wycena zapasu w opcji 3 jest
+ograniczona do ceny podlicznika, aby nie przypisywać mu zawyżonej wartości.
+Cena podlicznika nie ma domyślnej wartości — trzeba wpisać faktyczne rozliczenie.

@@ -249,3 +249,26 @@ test("szczegóły doby otwierają się z miesiąca, a bez magazynu ukrywamy por�
   assert.equal(d.getElementById("porownanie-modeli").hidden, true);
   assert.equal(d.getElementById("model-wykresu").disabled, true);
 });
+
+test("podlicznik: walidacja, zapis, trzeci model i szczegóły", async (t) => {
+  const { d, w, ustaw } = strona(t);
+  ustaw("od", "2026-01-01");
+  ustaw("do", "2026-01-01");
+  ustaw("sasiad", true);
+  assert.equal(d.getElementById("konfiguracja").checkValidity(), false);
+  ustaw("cenaSasiada", 1);
+  await oblicz(d);
+  assert.match(d.getElementById("modele").textContent, /3 — podlicznik/);
+  assert.match(
+    d.getElementById("wynik-sasiada").textContent,
+    /względem samego podlicznika/,
+  );
+  ustaw("wariant-wykresu", "magazynSasiad");
+  d.getElementById("wariant-wykresu").dispatchEvent(new w.Event("change"));
+  assert.equal(d.getElementById("model-wykresu").disabled, true);
+  assert.match(d.getElementById("bilans").textContent, /podlicznik:/);
+  const zapis = w.localStorage.getItem(klucz);
+  const druga = strona(t, zapis);
+  assert.equal(druga.d.getElementById("sasiad").checked, true);
+  assert.equal(druga.d.getElementById("cenaSasiada").value, "1");
+});

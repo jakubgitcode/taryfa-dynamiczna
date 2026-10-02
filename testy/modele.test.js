@@ -313,3 +313,97 @@ test("przy małej mocy zaczyna wcześniej i uzupełnia tańszą energią poza ok
   blisko(r[1].ladowanieSiec, 2);
   blisko(r[2].oddane, 4);
 });
+
+test("podlicznik: tanie ładowanie, braki G11 i osobne rozliczenie brutto", () => {
+  const moce = Array(24).fill(0);
+  moce[1] = 8;
+  const ceny = Array(24).fill(2000);
+  ceny[0] = 100;
+  const r = S.symuluj(
+    dane(ceny),
+    { ...p, sasiad: true, cenaSasiada: 1, mocGodzinowa: moce },
+    "2026-01-01",
+    "2026-01-01",
+  );
+  const v = r.warianty.find((v) => v.id === "magazynSasiad");
+  blisko(v.suma.ladowanieSiec, 5);
+  blisko(v.suma.importSasiad, 3);
+  blisko(v.suma.kosztSasiada, 3);
+  blisko(v.suma.kosztZakupu, 3.5);
+  blisko(v.suma.koszt, 3.5);
+  blisko(r.warianty.find((v) => v.id === "sasiad").suma.koszt, 8);
+  for (const w of v.przebieg)
+    blisko(
+      w.import + w.pv + w.socPrzed,
+      w.zuzycie + w.eksport + w.soc + w.strata,
+    );
+});
+test("podlicznik: straty czynią ładowanie nieopłacalnym i nie podwajamy podatków", () => {
+  const moce = Array(24).fill(0);
+  moce[12] = 4;
+  const r = S.symuluj(
+    dane(Array(24).fill(700)),
+    {
+      ...p,
+      sasiad: true,
+      cenaSasiada: 1,
+      sprawnosc: 80,
+      dystrybucja: 0.2,
+      vat: 23,
+      akcyza: 5,
+      mocGodzinowa: moce,
+    },
+    "2026-01-01",
+    "2026-01-01",
+  );
+  const v = r.warianty.find((v) => v.id === "magazynSasiad");
+  blisko(v.suma.ladowanieSiec, 0);
+  blisko(v.suma.koszt, 4);
+  blisko(v.suma.vat + v.suma.akcyza + v.suma.dystrybucja, 0);
+});
+test("podlicznik: cena wymagana tylko przy włączonej opcji", () => {
+  assert.throws(() => S.waliduj({ ...p, sasiad: true }), /cenaSasiada/);
+  assert.throws(
+    () => S.waliduj({ ...p, sasiad: true, cenaSasiada: -1 }),
+    /cenaSasiada/,
+  );
+  S.waliduj({ ...p, sasiad: false, cenaSasiada: NaN });
+});
+test("podlicznik: PV, granice SoC i zgodność składników rachunku", () => {
+  const r = S.symuluj(
+    dane(Array(24).fill(1500)),
+    {
+      ...p,
+      pv: true,
+      sasiad: true,
+      cenaSasiada: 0.6,
+      startSoc: 50,
+      sprawnosc: 81,
+      minSoc: 10,
+      mocGodzinowa: Array(24).fill(1),
+    },
+    "2026-01-01",
+    "2026-01-01",
+  );
+  const v = r.warianty.find((v) => v.id === "magazynPVSasiad");
+  blisko(v.odniesienie, 0.6);
+  for (const w of v.przebieg) {
+    assert.ok(w.soc >= 1 - 1e-7 && w.soc <= 10 + 1e-7);
+    blisko(
+      w.import + w.pv + w.socPrzed,
+      w.zuzycie + w.eksport + w.soc + w.strata,
+    );
+    blisko(w.import, w.importSasiad + w.ladowanieSiec);
+  }
+  const s = v.suma;
+  blisko(
+    s.koszt,
+    s.energia +
+      s.dystrybucja +
+      s.akcyza +
+      s.vat +
+      s.stale +
+      s.kosztSasiada +
+      s.korekta,
+  );
+});

@@ -105,3 +105,5 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
 - GitHub Actions: comiesięczne pobranie + walidacja + wykresy + commit (push z runnera potwierdzony).
 - `.gitignore`, `AGENTS.md`, `CLAUDE.md`, skille w `.claude/skills` i `.agents/skills`, `.venv` na Pythonie 3.12.
 - Kalkulator magazynu energii (`kalkulator.html` + `przygotuj_kalkulator.py`).
+
+- [x] Opcja 3: dynamiczne ładowanie magazynu, bieżące braki z podlicznika G11; osobna cena brutto, bilans godzinowy, porównanie z samym podlicznikiem i testy.
