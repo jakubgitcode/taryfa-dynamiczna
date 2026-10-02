@@ -1,5 +1,7 @@
 # taryfa-dynamiczna
 
+**Kalkulator online: https://jakubgitcode.github.io/taryfa-dynamiczna/**
+
 Porównanie G11 i modelowej taryfy dynamicznej, z opcjonalnym magazynem energii
 oraz PV. Historyczne ceny TGE RDN i heatmapy są dostępne od stycznia 2025.
 

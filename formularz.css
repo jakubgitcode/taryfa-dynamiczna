@@ -445,3 +445,28 @@ button:disabled {
 .kroki li {
   border-color: var(--green);
 }
+
+.werdykt {
+  margin: 18px 0 6px;
+  padding: 16px 18px;
+  background: #eaf0e5;
+  border: 1px solid #d5dfcf;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green);
+}
+.werdykt:empty {
+  display: none;
+}
+td.ocena-oplaca {
+  color: var(--green);
+  font-weight: 650;
+}
+td.ocena-granica {
+  color: #8a6b1f;
+}
+td.ocena-nie,
+td.ocena-brak {
+  color: #9c3b2e;
+}

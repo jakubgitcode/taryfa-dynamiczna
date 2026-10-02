@@ -285,6 +285,51 @@ function pokazWyniki(p) {
     }
   }
   document.getElementById("zwrot").textContent = zwroty.join(" ");
+  const ocena = {
+    oplaca: "Opłaca się",
+    granica: "Na granicy",
+    nie: "Nie opłaca się",
+    brak: "Brak oszczędności",
+  };
+  const pozycje = silnik.podsumowanie(wynik, p);
+  const lata = (poz) =>
+    poz.lata === null ? "brak oszczędności" : liczba.format(poz.lata) + " lat";
+  const tabelaZwrotow = document.getElementById("zwroty");
+  tabelaZwrotow.replaceChildren();
+  for (const poz of pozycje) {
+    const tr = document.createElement("tr");
+    const komorki = [
+      poz.etykieta,
+      kwota(poz.koszt),
+      kwota(poz.oszczednoscRok),
+      poz.lata === null ? "—" : lata(poz),
+      ocena[poz.werdykt],
+    ];
+    komorki.forEach((tekst, i) => {
+      const td = document.createElement("td");
+      td.textContent = tekst;
+      if (i === komorki.length - 1) td.className = "ocena-" + poz.werdykt;
+      tr.append(td);
+    });
+    tabelaZwrotow.append(tr);
+  }
+  document.getElementById("werdykt").textContent = pozycje.length
+    ? pozycje
+        .map(
+          (poz) =>
+            `${poz.etykieta}: ${lata(poz)} — ${ocena[poz.werdykt].toLowerCase()}.`,
+        )
+        .join(" ")
+    : "Włącz magazyn albo fotowoltaikę, żeby zobaczyć, czy inwestycja się zwraca.";
+  document.getElementById("zwrot-zalozenia").textContent = pozycje.length
+    ? `Przyjęta żywotność: ${pozycje
+        .map((poz) => `${poz.etykieta.toLowerCase()} ${poz.zycie} lat`)
+        .join(", ")}.${
+        pozycje[0].przeliczone
+          ? ` Oszczędność roczna przeliczona z ${wynik.dni} dni okresu.`
+          : ""
+      } Prosty zwrot, bez kosztu kapitału, degradacji i zmian cen.`
+    : "";
   const miesiace = document.getElementById("miesiace");
   miesiace.replaceChildren();
   const caption = document.createElement("caption");

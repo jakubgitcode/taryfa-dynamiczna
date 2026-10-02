@@ -371,9 +371,51 @@
     if (oszczednosc <= EPS) return "Brak zwrotu";
     return (koszt / oszczednosc).toFixed(1) + " lat";
   }
+
+  // Przyjęta żywotność instalacji — do oceny, czy inwestycja zdąży się zwrócić.
+  const ZYCIE = { magazyn: 15, pv: 25, magazynPV: 20 };
+
+  // Podsumowanie inwestycji: oszczędność z okresu przeliczona na rok i prosty
+  // zwrot. Bez DOM — prezentacja jest po stronie formularza.
+  function podsumowanie(wynik, p, zycie = ZYCIE) {
+    const baza = wynik.warianty.find((v) => v.id === "dynamiczna");
+    const magazyn = (p.kosztMagazynu || 0) + (p.kosztInwertera || 0);
+    const pozycje = [];
+    for (const [id, etykieta, koszt] of [
+      ["magazyn", "Sam magazyn", magazyn],
+      ["pv", "Sama fotowoltaika", p.kosztPV || 0],
+      ["magazynPV", "Magazyn i fotowoltaika", magazyn + (p.kosztPV || 0)],
+    ]) {
+      const v = wynik.warianty.find((w) => w.id === id);
+      if (!v || !baza || koszt <= 0 || wynik.dni <= 0) continue;
+      const oszczednoscOkres = baza.suma.koszt - v.suma.koszt;
+      const oszczednoscRok = (oszczednoscOkres * 365) / wynik.dni;
+      const lata = oszczednoscRok > EPS ? koszt / oszczednoscRok : null;
+      pozycje.push({
+        id,
+        etykieta,
+        koszt,
+        oszczednoscOkres,
+        oszczednoscRok,
+        lata,
+        zycie: zycie[id],
+        przeliczone: !wynik.pelnyRok,
+        werdykt:
+          lata === null
+            ? "brak"
+            : lata <= zycie[id] / 2
+              ? "oplaca"
+              : lata <= zycie[id]
+                ? "granica"
+                : "nie",
+      });
+    }
+    return pozycje;
+  }
   const api = {
     waliduj,
     stawki,
+    podsumowanie,
     wybierzDni,
     profilDnia,
     nowyStan,
