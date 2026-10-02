@@ -864,7 +864,8 @@
           <p class="opis">
             Model 1: jeden cykl dobowy w X najtańszych godzinach, bez kolejności
             zdarzeń i przenoszenia zapasu. Model 2: bilans godzinowy z rezerwą,
-            mocą i doładowaniem przed droższymi godzinami. Oba wykorzystują ten
+            mocą i doładowaniem przed droższymi godzinami. Opcja 3: bilans
+            godzinowy z zakupem braków od sąsiada. Wszystkie wykorzystują ten
             sam profil.
           </p>
           <div class="tabela">
@@ -879,8 +880,8 @@
                   <th>Ładowanie z sieci kWh</th>
                   <th>Koszt ładowania</th>
                   <th>Średnio zł/kWh ładowania</th>
-                  <th>Zakupy z sieci</th>
-                  <th>Podlicznik brutto</th>
+                  <th>Zakupy łącznie</th>
+                  <th>W tym podlicznik brutto</th>
                   <th>Korekta zapasu</th>
                   <th>Łączny koszt</th>
                 </tr>
@@ -1028,8 +1029,9 @@
           <li>
             Ceny to historyczne indeksy TGE: Fixing I, raporty XLSX i
             średnioważona TGeBase. Model nie odtwarza konkretnej umowy
-            sprzedawcy. G11 obejmuje podaną cenę, akcyzę i dystrybucję;
-            wszystkie zakupy i opłaty stałe są powiększane o VAT.
+            sprzedawcy. G11 obejmuje podaną cenę, akcyzę i dystrybucję; zakupy z
+            własnego przyłącza i opłaty stałe są powiększane o VAT. Cena
+            podlicznika jest już brutto i nie doliczamy do niej podatków.
           </li>
           <li>
             Magazyn działa chronologicznie. Moc ładowania i rozładowania jest
