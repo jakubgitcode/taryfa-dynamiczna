@@ -169,3 +169,6 @@ NASTĘPNE ROZSZERZENIA (PO DZIAŁAJĄCEJ WERSJI PODSTAWOWEJ)
 [ ] Dane 15-minutowe, przesuwanie zużycia EV/pompy/bojlera i wariant z agregatem.
 [ ] Porządki katalogów i usunięcie przestarzałych plików w osobnym zakresie.
 PLAN
+
+# Opcja 3 zaimplementowana: podlicznik G11 pokrywa bieżące braki,
+# ładowanie z dynamicznej/PV; osobne koszty brutto i baza bez magazynu.

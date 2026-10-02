@@ -59,6 +59,7 @@
       ["dom", "plaski", "wlasny"].includes(p.profil),
       "Nieznany profil zużycia.",
     );
+    if (p.sasiad) liczba("cenaSasiada", 0);
     if (p.magazyn) {
       wymagaj(
         Number.isInteger(p.godzinyLadowania ?? 4) &&
@@ -249,7 +250,7 @@
   // Późniejsze tańsze okna/PV mogą go uzupełnić, ale tylko z dostępną mocą.
   // Dzięki temu przy kilku równych tanich godzinach nie czekamy do ostatniej,
   // gdy jedna godzina nie wystarczyłaby na przygotowanie energii na szczyt.
-  function potrzebnyZapas(przyszle, p, pv, cena) {
+  function potrzebnyZapas(przyszle, p, pv, cena, sasiad) {
     const eta = Math.sqrt(p.sprawnosc / 100);
     const uzyteczna = p.pojemnosc * (1 - p.minSoc / 100);
     let potrzeba = 0;
@@ -267,7 +268,7 @@
         ((f.okno ?? true) && cenaF <= cena + EPS)
       ) {
         potrzeba = Math.max(0, potrzeba - p.mocLadowania * f.czas * eta);
-      } else if (cenaF > cena / (eta * eta) + EPS) {
+      } else if ((sasiad ? p.cenaSasiada : cenaF) > cena / (eta * eta) + EPS) {
         potrzeba = Math.min(
           uzyteczna,
           potrzeba + Math.min(reszta, p.mocRozladowania * f.czas) / eta,
@@ -280,7 +281,7 @@
   // Model 2: najpierw planowane okna, poza nimi doładowanie przy pustym
   // zapasie lub cenie niższej od kosztu zapasu, jeśli późniejsze zużycie
   // uzasadnia zakup po uwzględnieniu strat.
-  function krok(w, przyszle, p, stan, bateria, pv) {
+  function krok(w, przyszle, p, stan, bateria, pv, sasiad = false) {
     wymagaj(
       Number.isFinite(w.czas) && w.czas > 0 && w.czas <= 1,
       "Niepoprawny czas interwału.",
@@ -323,7 +324,7 @@
       );
       dodaj(ladowaniePV, 0);
       const zapas = Math.max(0, stan.energia - minimum);
-      const potrzeba = potrzebnyZapas(przyszle, p, pv, cena);
+      const potrzeba = potrzebnyZapas(przyszle, p, pv, cena, sasiad);
       const wolnoLadowac =
         (w.okno ?? true) ||
         zapas <= EPS ||
@@ -339,7 +340,10 @@
           (potrzeba - zapas) / eta,
         );
         dodaj(ladowanieSiec, cena);
-      } else if (ladowaniePV <= EPS && cena > stan.kosztJednostki / eta + EPS) {
+      } else if (
+        ladowaniePV <= EPS &&
+        (sasiad ? p.cenaSasiada : cena) > stan.kosztJednostki / eta + EPS
+      ) {
         oddane = Math.max(
           0,
           Math.min(pobor, p.mocRozladowania * w.czas, zapas * eta),
@@ -353,6 +357,7 @@
       pv: produkcja,
       bezposrednio,
       import: pobor - oddane + ladowanieSiec,
+      importSasiad: sasiad ? pobor - oddane : 0,
       eksport: nadwyzka - ladowaniePV,
       ladowaniePV,
       ladowanieSiec,
@@ -395,6 +400,8 @@
       ladowaniePV: 0,
       kosztLadowania: 0,
       kosztZakupu: 0,
+      importSasiad: 0,
+      kosztSasiada: 0,
       oddane: 0,
     };
   }
@@ -440,15 +447,41 @@
           model: "prosty",
           nazwa: v.nazwa + " — model prosty",
         });
+    if (p.sasiad) {
+      definicje.push({
+        id: "sasiad",
+        nazwa: "Sam podlicznik G11",
+        bateria: false,
+        pv: false,
+        sasiad: true,
+      });
+      for (const v of definicje.filter((v) => v.bateria && !v.model))
+        definicje.push({
+          ...v,
+          id: v.id + "Sasiad",
+          baza: v.id,
+          sasiad: true,
+          nazwa: v.nazwa + " — 3: podlicznik G11",
+        });
+    }
     // Jawne rozliczenie różnicy zapasu: energia oddawalna × pierwsza nieujemna
     // stawka zakupu. Dzięki temu początkowy zapas nie jest darmowym źródłem.
     const odniesienie = Math.max(0, stawki(dni[0].ceny[0][1], p).razem);
     const warianty = definicje.map((v) => ({
       ...v,
+      odniesienie: v.sasiad
+        ? Math.min(odniesienie, p.cenaSasiada)
+        : odniesienie,
       suma: pustaSuma(),
       miesiace: {},
       przebieg: [],
-      stan: v.bateria && v.model !== "prosty" ? nowyStan(p, odniesienie) : null,
+      stan:
+        v.bateria && v.model !== "prosty"
+          ? nowyStan(
+              p,
+              v.sasiad ? Math.min(odniesienie, p.cenaSasiada) : odniesienie,
+            )
+          : null,
     }));
     for (const dzien of dni) {
       const surowy = profilDnia(dzien, p);
@@ -469,7 +502,15 @@
           v.model === "prosty"
             ? prostyDzien(profil, p, v.pv)
             : profil.map((w, i) =>
-                krok(w, profil.slice(i + 1), p, v.stan, v.bateria, v.pv),
+                krok(
+                  w,
+                  profil.slice(i + 1),
+                  p,
+                  v.stan,
+                  v.bateria,
+                  v.pv,
+                  v.sasiad,
+                ),
               );
         for (const w of przebieg) {
           const s = stawki(w.cena, p, v.id === "g11");
@@ -477,15 +518,21 @@
             v.bateria && v.model !== "prosty"
               ? (w.socPrzed - w.soc) *
                 Math.sqrt(p.sprawnosc / 100) *
-                odniesienie
+                v.odniesienie
               : 0;
+          const importSasiad = w.importSasiad || 0;
+          const importDynamiczny = w.import - importSasiad;
+          const kosztSasiada = importSasiad * (p.cenaSasiada || 0);
+          const kosztZakupu = importDynamiczny * s.razem + kosztSasiada;
           const koszty = {
-            energia: w.import * s.energia,
-            dystrybucja: w.import * s.dystrybucja,
-            akcyza: w.import * s.akcyza,
-            vat: w.import * s.vat,
+            energia: importDynamiczny * s.energia,
+            dystrybucja: importDynamiczny * s.dystrybucja,
+            akcyza: importDynamiczny * s.akcyza,
+            vat: importDynamiczny * s.vat,
             korekta,
-            koszt: w.import * s.razem + korekta,
+            koszt: kosztZakupu + korekta,
+            importSasiad,
+            kosztSasiada,
             import: w.import,
             eksport: w.eksport,
             strata: w.strata,
@@ -494,7 +541,7 @@
             ladowanieSiec: w.ladowanieSiec,
             ladowaniePV: w.ladowaniePV,
             kosztLadowania: w.ladowanieSiec * s.razem,
-            kosztZakupu: w.import * s.razem,
+            kosztZakupu,
             oddane: w.oddane,
           };
           dodajSume(v.suma, koszty);
@@ -502,6 +549,8 @@
           v.przebieg.push({
             ...w,
             koszt: koszty.koszt,
+            importSasiad,
+            kosztSasiada,
             stawka: s.razem,
             kosztZakupu: koszty.kosztZakupu,
             kosztLadowania: koszty.kosztLadowania,

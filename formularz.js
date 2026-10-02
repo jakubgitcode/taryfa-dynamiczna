@@ -61,7 +61,7 @@ function odswiez() {
   document.getElementById("pola-profil").disabled = !wlasny;
   document.getElementById("pola-profil").hidden = !wlasny;
   document.getElementById("zuzycie").disabled = wlasny;
-  for (const id of ["magazyn", "pv"]) {
+  for (const id of ["magazyn", "pv", "sasiad"]) {
     const grupa = document.getElementById("pola-" + id);
     grupa.disabled = !wlaczone(id);
     grupa.hidden = !wlaczone(id);
@@ -286,6 +286,9 @@ function pokazModele() {
     for (const [v, nazwa] of [
       [prosty, "1 — prosty"],
       [bilans, "2 — bilans godzinowy"],
+      ...wynik.warianty
+        .filter((v) => v.sasiad && v.baza === bilans.id)
+        .map((v) => [v, "3 — podlicznik G11"]),
     ]) {
       const s = v.suma;
       wiersz(tabela, [
@@ -297,6 +300,7 @@ function pokazModele() {
           ? kwota(s.kosztLadowania / s.ladowanieSiec)
           : "—",
         kwota(s.kosztZakupu),
+        kwota(s.kosztSasiada),
         kwota(s.korekta),
         kwota(s.koszt),
       ]);
@@ -332,11 +336,27 @@ function pokazWyniki(p) {
     ]);
     wiersz(skladniki, [
       v.nazwa,
-      ...["energia", "dystrybucja", "akcyza", "vat", "stale", "korekta"].map(
-        (k) => kwota(v.suma[k]),
-      ),
+      ...[
+        "energia",
+        "dystrybucja",
+        "akcyza",
+        "vat",
+        "stale",
+        "kosztSasiada",
+        "korekta",
+      ].map((k) => kwota(v.suma[k])),
     ]);
   }
+  const samSasiad = wynik.warianty.find((v) => v.id === "sasiad");
+  document.getElementById("wynik-sasiada").textContent = samSasiad
+    ? wynik.warianty
+        .filter((v) => v.sasiad)
+        .map(
+          (v) =>
+            `${v.nazwa}: zakup od sąsiada ${energia(v.suma.importSasiad)} kWh za ${kwota(v.suma.kosztSasiada)}; oszczędność względem samego podlicznika: ${kwota(samSasiad.suma.koszt - v.suma.koszt)}.${v.bateria ? " Zwrot nakładów: " + silnik.zwrot(p.kosztMagazynu + p.kosztInwertera + (v.pv ? p.kosztPV : 0), samSasiad.suma.koszt - v.suma.koszt, wynik.pelnyRok) + "." : ""}`,
+        )
+        .join(" ")
+    : "";
   const zwroty = [];
   for (const [id, baza, koszt, etykieta] of [
     [
@@ -465,8 +485,8 @@ function pokazDzien() {
     (v) => v.id === document.getElementById("wariant-wykresu").value,
   );
   const wybor = document.getElementById("model-wykresu");
-  wybor.disabled = !bazowy.bateria;
-  if (!bazowy.bateria) wybor.value = "bilans";
+  wybor.disabled = !bazowy.bateria || bazowy.sasiad;
+  if (!bazowy.bateria || bazowy.sasiad) wybor.value = "bilans";
   const prosty = wybor.value === "prosty";
   const v = prosty
     ? wynik.modeleProste.find((v) => v.baza === bazowy.id)
@@ -496,7 +516,10 @@ function pokazDzien() {
       kwota(w.kosztZakupu),
       kwota(w.korekta),
       kwota(w.koszt),
-      w.powod,
+      w.powod +
+        (bazowy.sasiad
+          ? `; podlicznik: ${energia(w.importSasiad)} kWh / ${kwota(w.kosztSasiada)}`
+          : ""),
     ]);
     tr.classList.toggle("w-oknie", bazowy.bateria && w.okno);
   }
@@ -537,6 +560,10 @@ function pokazDzien() {
       );
     }
   }
+  if (bazowy.sasiad)
+    opis.push(
+      `Stawka w tabeli dotyczy własnego przyłącza dynamicznego; podlicznik rozliczony osobno w kolumnie działania. Wycena zapasu: ${kwota(v.odniesienie)}/kWh oddawalnej.`,
+    );
   document.getElementById("opis-dnia").textContent = opis.join(" ");
   const svg = document.getElementById("wykres-soc");
   svg.replaceChildren();

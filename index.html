@@ -559,6 +559,34 @@
             </div>
           </section>
           <section class="karta">
+            <h2>Opcja 3 — podlicznik od sąsiada</h2>
+            <label class="opcja"
+              ><input id="sasiad" type="checkbox" /> Uwzględnij zakup od
+              sąsiada</label
+            >
+            <fieldset id="pola-sasiad" hidden disabled>
+              <legend>Rozliczenie podlicznika</legend>
+              <label for="cenaSasiada"
+                >Końcowa cena brutto (zł/kWh)
+                <input
+                  id="cenaSasiada"
+                  type="number"
+                  min="0"
+                  step="any"
+                  required
+                />
+              </label>
+              <p class="opis">
+                Wpisz uzgodnioną pełną cenę z podlicznika. Nie doliczamy do niej
+                ponownie VAT, akcyzy ani dystrybucji. Magazyn ładuje się z
+                taryfy dynamicznej lub PV; sąsiad pokrywa całe pozostałe zużycie
+                domu, również gdy dynamiczna jest tańsza. Podlicznik nie ładuje
+                magazynu. Zachowujemy opłaty stałe Twojego przyłącza we
+                wszystkich wariantach; bez dodatkowej opłaty stałej dla sąsiada.
+              </p>
+            </fieldset>
+          </section>
+          <section class="karta">
             <div class="tytul">
               <span>03</span>
               <h2>Magazyn energii</h2>
@@ -832,11 +860,12 @@
         <p id="stan-wynikow" role="status" class="opis"></p>
         <p id="opis-wynikow" class="opis"></p>
         <div id="porownanie-modeli" hidden>
-          <h3>Dwa modele kosztu ładowania</h3>
+          <h3>Modele kosztu ładowania</h3>
           <p class="opis">
             Model 1: jeden cykl dobowy w X najtańszych godzinach, bez kolejności
             zdarzeń i przenoszenia zapasu. Model 2: bilans godzinowy z rezerwą,
-            mocą i doładowaniem przed droższymi godzinami. Oba wykorzystują ten
+            mocą i doładowaniem przed droższymi godzinami. Opcja 3: bilans
+            godzinowy z zakupem braków od sąsiada. Wszystkie wykorzystują ten
             sam profil.
           </p>
           <div class="tabela">
@@ -851,7 +880,8 @@
                   <th>Ładowanie z sieci kWh</th>
                   <th>Koszt ładowania</th>
                   <th>Średnio zł/kWh ładowania</th>
-                  <th>Zakupy z sieci</th>
+                  <th>Zakupy łącznie</th>
+                  <th>W tym podlicznik brutto</th>
                   <th>Korekta zapasu</th>
                   <th>Łączny koszt</th>
                 </tr>
@@ -911,6 +941,7 @@
           </table>
         </div>
         <p class="opis" id="zwrot"></p>
+        <p class="opis" id="wynik-sasiada"></p>
         <details>
           <summary>Składniki kosztu (zł)</summary>
           <div class="tabela">
@@ -926,6 +957,7 @@
                   <th>Akcyza</th>
                   <th>VAT</th>
                   <th>Stałe netto</th>
+                  <th>Podlicznik brutto</th>
                   <th>Korekta zapasu</th>
                 </tr>
               </thead>
@@ -997,8 +1029,9 @@
           <li>
             Ceny to historyczne indeksy TGE: Fixing I, raporty XLSX i
             średnioważona TGeBase. Model nie odtwarza konkretnej umowy
-            sprzedawcy. G11 obejmuje podaną cenę, akcyzę i dystrybucję;
-            wszystkie zakupy i opłaty stałe są powiększane o VAT.
+            sprzedawcy. G11 obejmuje podaną cenę, akcyzę i dystrybucję; zakupy z
+            własnego przyłącza i opłaty stałe są powiększane o VAT. Cena
+            podlicznika jest już brutto i nie doliczamy do niej podatków.
           </li>
           <li>
             Magazyn działa chronologicznie. Moc ładowania i rozładowania jest
