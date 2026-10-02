@@ -6,9 +6,18 @@ Lista zadań: [TODO.md](TODO.md).
 ## Cel projektu
 
 Ocena opłacalności **taryfy dynamicznej** (cena energii zależna od godzinowej ceny
-z Rynku Dnia Następnego TGE). Obecnie projekt robi tylko pierwszą część:
-pobiera godzinowe ceny RDN z tge.pl i rysuje heatmapy (dzień × godzina).
-Właściwy kalkulator opłacalności (porównanie z G11/G12) **jeszcze nie istnieje** (TODO P3).
+z Rynku Dnia Następnego TGE). Projekt pobiera godzinowe ceny RDN z tge.pl i rysuje heatmapy (dzień × godzina).
+`kalkulator.html` zawiera wcześniejszy prototyp porównania G11, taryfy dynamicznej, magazynu i PV.
+Nowa wersja: `index.html` + `formularz.css` + `formularz.js` to formularz i wyniki,
+`silnik.js` liczy chronologiczny bilans w przeglądarce, `dane_rdn.js` zawiera dane offline.
+`eksportuj_dane.py` przygotowuje je z miesięcznych CSV; Python nie jest wymagany do otwarcia strony.
+Testy: `pnpm test`, `python -m pytest -q`, `python -m ruff check .`.
+Plan etapów i ograniczenia: `work_now.sh`, `TODO.md`, `README.md`.
+
+Wynik jest modelem RDN, nie implementacją konkretnej umowy. Nie dodawaj domyślnego
+przychodu z eksportu PV bez modelu rozliczeń. Zachowuj rzeczywiste interwały 23/25 h;
+nie uśredniaj ich na potrzeby kalkulatora. Eksporter blokuje nowe luki i nieznane układy
+czasu; wyjątek to jawny brak 2025-09-30. Symulacja nie przechodzi przez tę lukę.
 
 ## Struktura
 
@@ -17,13 +26,17 @@ więc **uruchamiaj je z katalogu głównego repo**.
 
 | Plik | Status | Rola |
 |---|---|---|
-| `start.sh` | **aktualny** | cały pipeline dla miesiąca: pobierz → waliduj → heatmapa → heatmapy roczne (`[<miesiąc> <rok>]`, domyślnie poprzedni miesiąc) |
+| `index.html`, `formularz.css`, `formularz.js` | **aktualne** | statyczna strona i formularz z lokalnym zapisem |
+| `silnik.js` | **aktualny** | czysty silnik chronologiczny, bez DOM i zależności |
+| `eksportuj_dane.py`, `dane_rdn.js` | **aktualne** | zwalidowane CSV → dane strony offline |
+| `testy/`, `.github/workflows/testy.yml` | **aktualne** | testy silnika, DOM, parserów, walidacji i eksportu |
+| `start.sh` | **aktualny** | cały pipeline dla miesiąca: pobierz → waliduj → eksport strony → heatmapa → heatmapy roczne (`[<miesiąc> <rok>]`, domyślnie poprzedni miesiąc) |
 | `pobierz_dane.py` | **aktualny** | tge.pl / `archiwum/` → `tge_rdn_hourly_YYYY-MM.csv` (`<miesiąc> [rok]`) |
 | `waliduj_dane.py` | **aktualny** | kontrola jakości CSV (tylko stdlib), kod wyjścia 1 przy błędach |
 | `generuj_heatmap.py` | **aktualny** | CSV → `tge_rdn_heatmap_YYYY-MM.png`; tu jest paleta `RDN_CMAP` i `load_pivot()` |
 | `generuj_rok.py` | **aktualny** | → `tge_rdn_heatmap_<rok>_all.png` (siatka 4×3) i `_column.png` |
 | `konwertuj_excel.py` | **aktualny** | `archiwum/*.xlsx` → `tge_rdn_hourly_YYYY-MM.xlsx.csv`; jego `parse_excel_file` używa też `pobierz_dane.py` |
-| `.github/workflows/aktualizuj-dane.yml` | **aktualny** | 1. dnia miesiąca uruchamia `start.sh` za poprzedni miesiąc i commituje CSV + PNG |
+| `.github/workflows/aktualizuj-dane.yml` | **aktualny** | 1. dnia miesiąca uruchamia `start.sh` za poprzedni miesiąc i commituje CSV + PNG + dane strony |
 | `.claude/skills/`, `.agents/skills/` | **aktualne** | te same skille w dwóch miejscach (Claude Code i narzędzia czytające `.agents/`) — **zmieniasz jeden, skopiuj do drugiego** |
 | `miesac.py`, `miesac-stary-format.py` | przestarzałe | stare wersje scraper+heatmapa w jednym, **z błędem dat** — nie używać |
 | `all.png.py`, `all_column.py`, `pliki.py` | **to nie jest Python** | zapisy czatu Copilota; zastąpione przez `generuj_rok.py` (`pliki.py` = sposób pobrania `archiwum/`) |
@@ -101,7 +114,7 @@ Po każdym pobraniu/przetworzeniu danych uruchom `python3 waliduj_dane.py` (skil
 - Nie nadpisuj danych w repo bez sprawdzenia walidatora i `git diff`; nie edytuj `archiwum/`.
 - Workflow commituje dane sam — lokalnie nie commituj i nie pushuj bez prośby użytkownika.
 
-## Kontekst domenowy (do P3 — zweryfikuj aktualne stawki przed użyciem)
+## Kontekst domenowy (zweryfikuj aktualne stawki przed użyciem)
 
 Koszt energii w taryfie dynamicznej ≈ Σ_h zużycie_h × (cena_RDN_h + opłata/marża sprzedawcy)
 + akcyza + VAT; do tego opłaty dystrybucyjne OSD (zmienne i stałe), które zależą od taryfy

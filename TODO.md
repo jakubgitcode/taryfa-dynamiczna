@@ -3,6 +3,20 @@
 Kontekst i zasady: `AGENTS.md`. Walidator danych: `python3 waliduj_dane.py`.
 Na górze to, co zostało; na dole skrót tego, co już zrobione.
 
+## Nowa strona (przeglądarka)
+
+- [x] Formularz offline, walidacja, opcjonalny magazyn/PV, zapis/reset localStorage.
+- [x] Chronologiczny silnik JS: bilans, SoC, oba limity mocy, sprawność, przenoszenie między dobami.
+- [x] Testy obliczeń i DOM formularza, parserów HTML/XLSX oraz walidacji/eksportu.
+- [x] Zwalidowane ceny offline z metadanymi źródeł, bez uśredniania 25. godziny i interpolacji luk.
+- [x] Porównanie wariantów, miesięczne koszty, składniki rachunku i bilans wybranego dnia.
+- [x] Oszczędność magazynu względem dynamicznej bez magazynu; pełny rok wymagany do prostego zwrotu.
+- [x] Opłaty stałe, jawna korekta zapasu początkowego/końcowego oraz oznaczanie nieaktualnych wyników.
+- [ ] Odbiór wizualny na komputerze/telefonie i ręczna kontrola klawiatury w przeglądarce.
+      Testy jsdom sprawdzają zachowanie DOM, nie renderowanie CSS.
+- [ ] Zweryfikowane mapowanie etykiet TGE na czas licznika przed importem profilu OSD.
+- [ ] Akceptacja PR i publikacja strony (osobny etap po przeglądzie).
+
 ## Dane
 
 - [ ] **Spójność indeksu ceny.** Mamy trzy różne indeksy w jednym szeregu: Fixing I (dostawy do 30.09.2025),
@@ -22,9 +36,9 @@ Na górze to, co zostało; na dole skrót tego, co już zrobione.
 Pierwsza wersja działa: cztery warianty (G11 / dynamiczna / + magazyn / + magazyn i PV), dane 2025–2026
 wbudowane w stronę przez `przygotuj_kalkulator.py`.
 
-- [ ] Podpiąć `przygotuj_kalkulator.py` do `start.sh` (i tym samym do CI), żeby dane w kalkulatorze
-      odświeżały się razem z heatmapami. Uwaga: opublikowaną stronę trzeba przepublikować ręcznie.
-- [ ] Opłaty stałe i opłata mocowa — dziś pominięte (są takie same w każdym wariancie, ale zmieniają rachunek).
+- [x] Nowy eksporter `eksportuj_dane.py` jest częścią `start.sh` i CI; `dane_rdn.js` odświeża się z heatmapami.
+      Starszy `kalkulator.html` pozostaje zamrożonym prototypem. Publikacja hostowanej strony jest osobna.
+- [x] Nowa strona uwzględnia łączną miesięczną opłatę stałą z formularza (w tym wpisaną opłatę mocową).
 - [ ] Degradacja magazynu (np. −2%/rok) i koszt kapitału — bez tego prosty zwrot jest zbyt optymistyczny.
 - [ ] Import profilu zużycia z licznika (CSV z portalu OSD) zamiast profilu modelowego.
 - [ ] Produkcja PV z realnych danych (PVGIS dla lokalizacji) zamiast modelu sinusoidalnego.
@@ -36,10 +50,13 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
 
 ## Automatyzacja
 
-- [ ] **Sprawdzić harmonogram CI.** Przebieg zaplanowany na 1.10.2026 06:17 UTC nie wystartował
-      (ręczne uruchomienia działają, push z runnera potwierdzony). Jeśli 1.11 też nie ruszy —
-      poszukać przyczyny (crony GitHuba bywają opóźniane, nowe repo bywa rejestrowane z opóźnieniem).
-- [ ] CI: `ruff` + `pytest` na pull requestach.
+- [x] Harmonogram CI: przebieg `schedule` 1.10.2026 wystartował o 13:10 UTC i zakończył się sukcesem.
+      [Przebieg 36866818782](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36866818782).
+- [x] Workflow testów PR/push: Node + jsdom, pytest, ruff, zgodność danych i eksport bez pobierania.
+- [x] Testy PR oraz ręczny eksport przeszły na gałęzi `codex/kalkulator-przegladarka`.
+      [PR #1](https://github.com/jakubgitcode/taryfa-dynamiczna/pull/1),
+      [testy](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995070564),
+      [eksport](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995090280).
 
 ## Kod i porządki
 
@@ -47,14 +64,15 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
       `miesac-stary-format.py` (mają stary błąd dat), `run_year_2025.py` (pusty), `old/`.
 - [ ] `pliki.py` (zapis czatu) → prawdziwy `pobierz_archiwum.py` (xlsx z `https://tge.pl/RDN_instrumenty_15`;
       uwaga: ten adres przestał zwracać listę plików — sprawdzić, gdzie TGE trzyma raporty teraz).
-- [ ] Usunąć zepsute `myvenv/`; przypiąć wersje w `requirements.txt` (CI instaluje najnowsze — dziś pandas 3.x).
+- [x] Przypięte wersje w `requirements.txt`, `requirements-dev.txt`, `package.json` i lockfile pnpm.
+- [ ] Usunąć zepsute `myvenv/`.
 - [ ] Git na vboxsf: `git config core.fileMode false` i `safe.directory` dla tej ścieżki.
 - [ ] Zdecydować o `*.xlsx.csv` (surowe wyjście konwertera — te same dane są w miesięcznych CSV).
 - [ ] Uporządkować katalogi: `dane/` (CSV), `wykresy/` (PNG), `archiwum/` (xlsx), kod w `skrypty/` lub pakiecie.
 - [ ] `argparse` zamiast ręcznego parsowania `sys.argv`; domyślny rok w `konwertuj_excel.py` (wciąż 2025).
 - [ ] Tryb „dociągnij tylko brakujące dni” w `pobierz_dane.py`.
-- [ ] Testy `pytest`: `pl_number_to_float`, parser HTML na zapisanych stronach (stara z nagłówkiem, TGeBase,
-      strona z samymi `-`), `konwertuj_excel.parse_excel_file` (w tym 26.10.2025 z `H02a`), walidator.
+- [x] Testy parserów na syntetycznych fragmentach HTML, liczb PL, XLSX 26.10.2025 (H02a),
+      walidatora i eksportera; dodatkowe przypadki rozbudowywać przy zmianach formatów źródłowych.
 - [ ] Heatmapa: oznaczać komórki bez danych, w dniu 25-godzinnym zaznaczyć uśrednioną godzinę.
 - [ ] Skille są w dwóch kopiach (`.claude/skills/`, `.agents/skills/`) — rozważyć skrypt sprawdzający, czy się nie rozjechały.
 

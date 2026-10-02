@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Pobiera dane TGE RDN za miesiąc, waliduje je i generuje heatmapy (miesięczną i roczne).
+# Pobiera ceny, waliduje dane i generuje heatmapy oraz dane statycznej strony.
 #
 # Użycie:
 #     ./start.sh                 # poprzedni miesiąc
 #     ./start.sh <miesiąc> <rok>
+#     ./start.sh --tylko-eksport  # istniejące CSV → strona, bez pobierania i wykresów
 #
 # Interpreter: zmienna PYTHON, domyślnie .venv/bin/python.
 set -euo pipefail
@@ -12,6 +13,14 @@ cd "$(dirname "$0")"
 PY="${PYTHON:-.venv/bin/python}"
 
 case $# in
+    1)
+        if [[ $1 == --tylko-eksport ]]; then
+            "$PY" eksportuj_dane.py
+            exit 0
+        fi
+        echo "Nieznany argument: $1" >&2
+        exit 1
+        ;;
     0)
         poprzedni=$(date -d "$(date +%Y-%m-01) -1 day" +%Y-%m)
         ROK=${poprzedni%-*}
@@ -36,5 +45,6 @@ CSV=$(printf 'tge_rdn_hourly_%s-%02d.csv' "$ROK" "$MIESIAC")
 
 "$PY" pobierz_dane.py "$MIESIAC" "$ROK"
 "$PY" waliduj_dane.py "$CSV"
+"$PY" eksportuj_dane.py
 "$PY" generuj_heatmap.py "$CSV"
 "$PY" generuj_rok.py "$ROK"
