@@ -49,19 +49,26 @@ na danych historycznych liczymy dokładnie tak, jakbyśmy je wtedy znali. To nie
       (dolina cen od fotowoltaiki).
 - [ ] **Model 1 — prosty.** Koszt = energia naładowana w tych X godzinach × ceny tych godzin. Bez sprawdzania,
       czy zapas wystarczy na konkretną godzinę doby. Punkt odniesienia i górna granica optymizmu.
-- [ ] **Model 2 — bilans godzina po godzinie.** Symulacja stanu naładowania: zużycie zjada zapas, a gdy się
-      skończy (typowo zimą około 13:00, przy drogim prądzie), model decyduje między:
+- [ ] **Model 2 — bilans godzina po godzinie.** Symulacja stanu naładowania: zużycie godzinowe zjada zapas.
+      Moment wyczerpania magazynu **wynika z profilu i pojemności** — nie zakładamy go z góry i przy większym
+      magazynie może nie nastąpić wcale. Gdy zapas się kończy, model decyduje między:
       (a) dokupieniem brakujących kWh po bieżącej cenie, a
       (b) doładowaniem magazynu na zapas, jeśli znane ceny kolejnych godzin są wyższe —
-      np. o 13:00 widać, że do 20:00 cena tylko rośnie, więc dokupujemy wtedy 6 kWh z góry.
+      np. widząc o 13:00, że do 20:00 cena tylko rośnie, dokupujemy wtedy 6 kWh z góry.
       Decyzja na podstawie cen znanych do końca doby (a po publikacji — także następnej),
       z uwzględnieniem mocy ładowania, wolnej pojemności i strat.
 - [ ] **Porównanie obu modeli** w wynikach — różnica pokazuje, ile kosztuje uproszczenie i czy warto
       sterować magazynem aktywnie, czy wystarczy sztywne okno nocne.
+- [ ] **Profil zużycia godzina po godzinie jako wejście do obu modeli** — zamiast jednej liczby dobowej.
+      Edytowalne 24 wartości w kW, z presetami sezonowymi (profil zmienia się z porą roku).
+      Przykład z życia do wpisania jako preset: 0,3 kW w nocy, do 2 kW między 10:00 a 12:00,
+      0,6 kW do 15:00, 2 kW od 19:00 do 1:00 — razem około 18 kWh na dobę.
+      Docelowo zastąpić presety realnymi dobowymi krzywymi (zima / lato / przejściowe),
+      a potem danymi z licznika — patrz „Import profilu zużycia z licznika” niżej.
 - [ ] **Rozwijane szczegóły dla pojedynczej doby.** Tabela: godzina, cena RDN, cena po opłatach, zużycie,
       ładowanie/rozładowanie, stan magazynu, zakup z sieci, koszt godziny — plus krótki opis słowny,
-      co w tej dobie robimy („ładujemy 1:00–5:00 po 180 zł/MWh, zapas kończy się o 13:00, dokupujemy
-      6 kWh przed wieczornym szczytem”). Do klikania z tabeli miesięcznej.
+      co w tej dobie robimy („ładujemy 1:00–5:00 po 180 zł/MWh, zapas kończy się o 14:00, dokupujemy
+      6 kWh przed wieczornym szczytem” albo „magazyn wystarczył do końca doby”). Do klikania z tabeli miesięcznej.
 
 - [ ] Degradacja magazynu (np. −2%/rok) i koszt kapitału — bez tego prosty zwrot jest zbyt optymistyczny.
 - [ ] Import profilu zużycia z licznika (CSV z portalu OSD) zamiast profilu modelowego.
