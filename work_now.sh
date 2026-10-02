@@ -7,7 +7,10 @@ STATUS WDROŻENIA (2026-10-02)
 Działa wersja podstawowa offline: formularz → silnik → dane → wyniki.
 Lokalnie przechodzi 16 testów silnika, 9 testów DOM i 15 testów Pythona,
 ruff, eksport danych i kontrola zgodności wygenerowanego pliku.
-Etapy połączono w jeden spójny PR, aby nie tworzyć zależnych gałęzi.
+Etapy połączono w jeden spójny PR, aby nie tworzyć zależnych gałęzi:
+https://github.com/jakubgitcode/taryfa-dynamiczna/pull/1
+Testy PR: sukces — https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995070564
+Eksport CI: sukces — https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995090280
 Pozostałe pozycje [ ] wymagają przeglądarki, konkretnej umowy, przyszłych
 notowań lub odbioru PR. Rozszerzenia na końcu nie należą do wersji podstawowej.
 
@@ -129,7 +132,7 @@ STAN POCZĄTKOWY
     obok CSV/PNG. Zachować sekwencyjne pobieranie, retry i atomowy zapis.
 [x] Najpierw uruchomić lokalnie testy i eksport na istniejących CSV.
     Sprawdzić powtórne generowanie bez zmian i zachowanie przy błędzie.
-[ ] Wysłać PR-y, uruchomić odpowiednie workflow na właściwej gałęzi,
+[x] Wysłać PR-y, uruchomić odpowiednie workflow na właściwej gałęzi,
     sprawdzić logi i wyniki; nie uruchamiać pełnego pobierania archiwum.
     Workflow z automatycznym commitem najpierw sprawdzić na gałęzi testowej.
 [x] Zdiagnozować harmonogram: domyślna gałąź, aktywność workflow, zdarzenia
@@ -137,11 +140,11 @@ STAN POCZĄTKOWY
     Gotowe: lokalne kontrole i CI przechodzą dla aktualnej wersji zmian.
 
 8. ODBIÓR I DOKUMENTACJA
-[ ] Dla każdego PR: konkretny zakres, założenia i wykonane testy; poprawić
+[x] Dla każdego PR: konkretny zakres, założenia i wykonane testy; poprawić
     wykryte regresje i ponownie sprawdzić zmieniony zakres.
 [x] Zaktualizować README, AGENTS.md i TODO.md: start offline, przygotowanie
     danych, komendy testów, ograniczenia indeksów i status starszego prototypu.
-[ ] Dostarczyć linki do strony/plików, PR-ów i przebiegów CI oraz listę
+[x] Dostarczyć linki do strony/plików, PR-ów i przebiegów CI oraz listę
     ewentualnych ograniczeń; nie oznaczać niewykonanych kontroli jako zaliczone.
 [ ] Po udostępnieniu dostawy 2026-10-25 zweryfikować rzeczywistą dobę 25 h
     z TGeBase. Do tego czasu pokryć przypadek fixture'ami i pozostawić kontrolę

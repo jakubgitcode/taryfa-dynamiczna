@@ -53,7 +53,10 @@ wbudowane w stronę przez `przygotuj_kalkulator.py`.
 - [x] Harmonogram CI: przebieg `schedule` 1.10.2026 wystartował o 13:10 UTC i zakończył się sukcesem.
       [Przebieg 36866818782](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36866818782).
 - [x] Workflow testów PR/push: Node + jsdom, pytest, ruff, zgodność danych i eksport bez pobierania.
-- [ ] Potwierdzić zielony przebieg nowych testów oraz ręcznego eksportu na gałęzi PR.
+- [x] Testy PR oraz ręczny eksport przeszły na gałęzi `codex/kalkulator-przegladarka`.
+      [PR #1](https://github.com/jakubgitcode/taryfa-dynamiczna/pull/1),
+      [testy](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995070564),
+      [eksport](https://github.com/jakubgitcode/taryfa-dynamiczna/actions/runs/36995090280).
 
 ## Kod i porządki
 
