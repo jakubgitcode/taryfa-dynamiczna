@@ -694,6 +694,21 @@
                     <span>%</span>
                   </span>
                 </label>
+                <label for="rezerwaSoc"
+                  >Rezerwa — docelowy zapas<span class="wejscie">
+                    <input
+                      id="rezerwaSoc"
+                      name="rezerwaSoc"
+                      type="number"
+                      value="50"
+                      min="0"
+                      max="100"
+                      step="any"
+                      required
+                    />
+                    <span>%</span>
+                  </span>
+                </label>
                 <label for="sprawnosc"
                   >Sprawność pełnego cyklu<span class="wejscie">
                     <input
@@ -864,7 +879,9 @@
           <p class="opis">
             Model 1: jeden cykl dobowy w X najtańszych godzinach, bez kolejności
             zdarzeń i przenoszenia zapasu. Model 2: bilans godzinowy z rezerwą,
-            mocą i doładowaniem przed droższymi godzinami. Opcja 3: bilans
+            mocą i doładowaniem przed droższymi godzinami. Rezerwa to docelowy
+            zapas z formularza (domyślnie 50%), dobijany tylko w godzinach
+            tańszych niż typowa cena w resztę doby. Opcja 3: bilans
             godzinowy z zakupem braków od sąsiada. Wszystkie wykorzystują ten
             sam profil.
           </p>
@@ -881,6 +898,7 @@
                   <th>Koszt ładowania</th>
                   <th>Średnio zł/kWh ładowania</th>
                   <th>Zakupy łącznie</th>
+                  <th>Zakupy poza magazynem</th>
                   <th>W tym podlicznik brutto</th>
                   <th>Korekta zapasu</th>
                   <th>Łączny koszt</th>
@@ -893,8 +911,10 @@
           <p class="opis">
             Koszt ładowania obejmuje energię, marżę, dystrybucję, akcyzę i VAT,
             bez opłat stałych. Średnia dotyczy kWh pobranej do magazynu po
-            stronie AC. Łączny koszt obejmuje cały pobór, opłaty stałe i korektę
-            zapasu. Model prosty nie jest gwarantowaną dolną granicą kosztu;
+            stronie AC. Zakupy poza magazynem to energia kupiona wprost na
+            bieżące zużycie, z pominięciem magazynu — razem z ładowaniem dają
+            zakupy łączne. Łączny koszt obejmuje cały pobór, opłaty stałe i
+            korektę zapasu. Model prosty nie jest gwarantowaną dolną granicą kosztu;
             różnica nie mierzy osobno korzyści z aktywnego sterowania.
           </p>
         </div>

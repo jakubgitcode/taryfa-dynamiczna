@@ -72,6 +72,12 @@
       liczba("minSoc", 0, 99);
       liczba("startSoc", p.minSoc, 100);
       liczba("sprawnosc", 1, 100);
+      wymagaj(
+        Number.isFinite(p.rezerwaSoc ?? 0) &&
+          (p.rezerwaSoc ?? 0) >= 0 &&
+          (p.rezerwaSoc ?? 0) <= 100,
+        "Niepoprawny parametr: rezerwaSoc.",
+      );
       liczba("kosztMagazynu", 0);
       liczba("kosztInwertera", 0);
     }
@@ -246,6 +252,15 @@
     });
   }
 
+  // Typowa (środkowa) cena pozostałych godzin — punkt odniesienia dla rezerwy.
+  function medianaCen(przyszle, p) {
+    if (!przyszle.length) return null;
+    const ceny = przyszle
+      .map((f) => stawki(f.cena, p).razem)
+      .sort((a, b) => a - b);
+    return ceny[Math.floor(ceny.length / 2)];
+  }
+
   // Prognoza zapasu potrzebnego do końca doby, liczona od końca.
   // Późniejsze tańsze okna/PV mogą go uzupełnić, ale tylko z dostępną mocą.
   // Dzięki temu przy kilku równych tanich godzinach nie czekamy do ostatniej,
@@ -300,7 +315,8 @@
     let ladowaniePV = 0,
       ladowanieSiec = 0,
       oddane = 0,
-      strata = 0;
+      strata = 0,
+      zRezerwy = false;
     if (bateria) {
       const eta = Math.sqrt(p.sprawnosc / 100);
       const minimum = (p.pojemnosc * p.minSoc) / 100;
@@ -329,16 +345,22 @@
         (w.okno ?? true) ||
         zapas <= EPS ||
         cena < stan.kosztJednostki * eta - EPS;
-      if (
-        ladowaniePV <= EPS &&
-        nadwyzka <= EPS &&
-        wolnoLadowac &&
-        potrzeba > zapas + EPS
-      ) {
-        ladowanieSiec = Math.min(
-          p.mocLadowania * w.czas,
-          (potrzeba - zapas) / eta,
-        );
+      // Rezerwa: trzymamy zapas na zadanym poziomie, ale tylko w godzinach,
+      // w których cena po stratach nie jest wyższa od typowej ceny w resztę doby.
+      const rezerwa = Math.max(
+        0,
+        (p.pojemnosc * (p.rezerwaSoc ?? 0)) / 100 - minimum,
+      );
+      const typowa = medianaCen(przyszle, p);
+      const taniaGodzina =
+        rezerwa > EPS && typowa !== null && cena <= typowa * eta * eta + EPS;
+      const cel = Math.max(
+        wolnoLadowac ? potrzeba : 0,
+        taniaGodzina ? rezerwa : 0,
+      );
+      zRezerwy = taniaGodzina && rezerwa > potrzeba + EPS;
+      if (ladowaniePV <= EPS && nadwyzka <= EPS && cel > zapas + EPS) {
+        ladowanieSiec = Math.min(p.mocLadowania * w.czas, (cel - zapas) / eta);
         dodaj(ladowanieSiec, cena);
       } else if (
         ladowaniePV <= EPS &&
@@ -369,9 +391,11 @@
         ladowaniePV > EPS
           ? "Ładowanie nadwyżką PV"
           : ladowanieSiec > EPS
-            ? (w.okno ?? true)
-              ? "Ładowanie w wybranym oknie"
-              : "Doładowanie przed droższymi godzinami"
+            ? zRezerwy
+              ? "Dobicie rezerwy w taniej godzinie"
+              : (w.okno ?? true)
+                ? "Ładowanie w wybranym oknie"
+                : "Doładowanie przed droższymi godzinami"
             : oddane > EPS
               ? "Zużycie z magazynu"
               : pobor > EPS

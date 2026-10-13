@@ -278,3 +278,24 @@ test("pełny dostępny rok 2026: skończone wyniki i zgodność sum miesięcznyc
       );
   }
 });
+
+test("rezerwa dobija magazyn w taniej godzinie, ale nie w drogiej", () => {
+  const cfg = { ...p, rezerwaSoc: 50, minSoc: 10, startSoc: 10, sprawnosc: 100 };
+  // brak zużycia w kolejnych godzinach, więc potrzebnyZapas wynosi 0
+  const przyszleDrogie = Array.from({ length: 6 }, () => w(1000));
+  const przyszleTanie = Array.from({ length: 6 }, () => w(0));
+
+  const stanTani = S.nowyStan(cfg, 0);
+  const tani = S.krok(w(0), przyszleDrogie, cfg, stanTani, true, false);
+  blisko(tani.soc, 5); // 50% z 10 kWh
+  blisko(tani.ladowanieSiec, 4); // ponad minimum 1 kWh, limit mocy 5 kW
+  assert.equal(tani.powod, "Dobicie rezerwy w taniej godzinie");
+
+  const stanDrogi = S.nowyStan(cfg, 0);
+  const drogi = S.krok(w(1000), przyszleTanie, cfg, stanDrogi, true, false);
+  blisko(drogi.ladowanieSiec, 0);
+
+  // bez parametru rezerwy zachowanie pozostaje bez zmian
+  const stanBez = S.nowyStan(p, 0);
+  blisko(S.krok(w(0), przyszleDrogie, p, stanBez, true, false).ladowanieSiec, 0);
+});

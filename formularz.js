@@ -300,6 +300,7 @@ function pokazModele() {
           ? kwota(s.kosztLadowania / s.ladowanieSiec)
           : "—",
         kwota(s.kosztZakupu),
+        kwota(s.kosztZakupu - s.kosztLadowania),
         kwota(s.kosztSasiada),
         kwota(s.korekta),
         kwota(s.koszt),
